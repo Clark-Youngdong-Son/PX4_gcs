@@ -6,14 +6,17 @@
 
 ## Installation Guide ##
 * #### QtCreator ####
+'''
 $ sudo apt-get install qtcreator
+'''
 * #### ros-qt dependancies ####
+'''
 $ sudo apt-get install ros-indigo-qt-build ros-indigo-qt-create
+'''
 
 ## Make ##
 * #### package ####
-In "px4_gcs" folder,
-
+In 'px4\_gcs' folder,
 $ catkin_make
 
 ## Push button function ##
