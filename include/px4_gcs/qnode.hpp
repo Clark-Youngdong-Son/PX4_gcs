@@ -50,6 +50,8 @@ public:
 Q_SIGNALS:
 	void loggingUpdated();
     void rosShutdown();
+	void pushButton_connect_ros_color(bool);
+	void pushButton_connect_px4_color(bool);
 
 private:
 	int init_argc;

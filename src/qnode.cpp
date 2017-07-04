@@ -53,9 +53,11 @@ bool QNode::init()
 		if (!ros::master::check())
 		{
 			log("Failed to connect ROS master");
+			Q_EMIT pushButton_connect_ros_color(false);
 			return false;
 		}
 		ROSConnectionFlag = true;
+		Q_EMIT pushButton_connect_ros_color(true);
 		log("Connected to ROS master");
 
 		ros::start(); // explicitly needed since our nodehandle is going out of scope.
@@ -77,6 +79,7 @@ bool QNode::connect_px4()
 	if(!ROSConnectionFlag)
 	{
 		log("Connect ROS master before connecting PX4");
+		Q_EMIT pushButton_connect_ros_color(false);
 		return false;
 	}
 	else
@@ -85,12 +88,14 @@ bool QNode::connect_px4()
 		if(PX4ConnectionFlag)
 		{
 			log("Connected to PX4");
+			Q_EMIT pushButton_connect_px4_color(true);
 			initializationFlag = true;
 			return true;
 		}
 		else
 		{
 			log("Failed to connect PX4");
+			Q_EMIT pushButton_connect_px4_color(false);
 			return false;
 		}
 	}
@@ -109,12 +114,14 @@ void QNode::run() {
 			if(PX4StateTimer>PX4_LOSS_TIME && !PX4DisconnectionFlag)
 			{
 				log("[Error] PX4 signal loss!");
+				Q_EMIT pushButton_connect_px4_color(false);
 				PX4DisconnectionFlag = true;
 				PX4ConnectionFlag = false;
 			}
 			if(PX4DisconnectionFlag && PX4StateTimer<PX4_LOSS_TIME)
 			{
 				log("[Info] PX4 signal regained");
+				Q_EMIT pushButton_connect_px4_color(true);
 				PX4DisconnectionFlag = false;
 			}
 		}
@@ -137,8 +144,8 @@ void QNode::log(const std::string &msg)
 
 void QNode::state_cb(const mavros_msgs::State::ConstPtr &msg)
 {
-	PX4StateTimer = 0.0;
 	PX4ConnectionFlag = msg->connected;
+	if(PX4ConnectionFlag) PX4StateTimer = 0.0;
 }
 
 }  // namespace px4_gcs

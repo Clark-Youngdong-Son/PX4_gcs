@@ -39,6 +39,8 @@ public Q_SLOTS:
 	void on_pushButton_connect_ros_clicked();
 	void on_pushButton_connect_px4_clicked();
 	void updateLoggingView();
+	void set_pushButton_connect_ros_color(bool);
+	void set_pushButton_connect_px4_color(bool);
 
 private:
 	Ui::ICSL_GCS ui;
