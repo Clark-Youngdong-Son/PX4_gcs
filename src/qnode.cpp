@@ -103,17 +103,20 @@ void QNode::run() {
 	while ( ros::ok() )
 	{
 		ros::spinOnce();
-
-		PX4StateTimer += 1.0/rate;
-		if(PX4StateTimer>PX4_LOSS_TIME && !PX4DisconnectionFlag)
+		if(initializationFlag)
 		{
-			log("[Error] PX4 signal loss!");
-			PX4DisconnectionFlag = true;
-		}
-		if(PX4DisconnectionFlag && PX4StateTimer<PX4_LOSS_TIME)
-		{
-			log("[Info] PX4 signal regained");
-			PX4DisconnectionFlag = false;
+			PX4StateTimer += 1.0/rate;
+			if(PX4StateTimer>PX4_LOSS_TIME && !PX4DisconnectionFlag)
+			{
+				log("[Error] PX4 signal loss!");
+				PX4DisconnectionFlag = true;
+				PX4ConnectionFlag = false;
+			}
+			if(PX4DisconnectionFlag && PX4StateTimer<PX4_LOSS_TIME)
+			{
+				log("[Info] PX4 signal regained");
+				PX4DisconnectionFlag = false;
+			}
 		}
 		loop_rate.sleep();
 	}
