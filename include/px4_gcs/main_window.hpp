@@ -41,8 +41,6 @@ public Q_SLOTS:
 	void updateLoggingView();
 
 private:
-	bool ROSConnectionFlag;
-	bool PX4ConnectionFlag;
 	Ui::ICSL_GCS ui;
 	QNode qnode;
 };

@@ -29,7 +29,6 @@ using namespace Qt;
 ICSL_GCS::ICSL_GCS(int argc, char** argv, QWidget *parent)
 	: QMainWindow(parent)
 	, qnode(argc,argv)
-	, ROSConnectionFlag(false), PX4ConnectionFlag(false)
 {
 	ui.setupUi(this); // Calling this incidentally connects all ui's triggers to on_...() callbacks in this class.
 	setWindowIcon(QIcon(":/images/icon.jpeg"));
@@ -47,30 +46,13 @@ void ICSL_GCS::updateLoggingView()
 
 void ICSL_GCS::on_pushButton_connect_ros_clicked()
 {
-	if(qnode.init())
-	{
-		std::cout << "Connected to ROS master" << std::endl;
-		ROSConnectionFlag = true;
-	}
-	else
-	{
-		std::cout << "Failed to connect ROS master" << std::endl;
-		ROSConnectionFlag = false;
-	}
+	qnode.init();
 }
 
 void ICSL_GCS::on_pushButton_connect_px4_clicked()
 {
-	if(qnode.connect_px4())
-	{
-		std::cout << "Connected to PX4" << std::endl;
-		PX4ConnectionFlag = true;
-	}
-	else
-	{
-		std::cout << "Failed to connect PX4" << std::endl;
-		PX4ConnectionFlag = false;
-	}
+	qnode.connect_px4();
 }
+
 }  // namespace px4_gcs
 

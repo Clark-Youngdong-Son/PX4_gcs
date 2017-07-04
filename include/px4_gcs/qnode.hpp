@@ -22,6 +22,7 @@
 #include <QStringListModel>
 #include <mavros_msgs/State.h>
 
+#define PX4_LOSS_TIME 3
 
 /*****************************************************************************
 ** Namespaces
@@ -59,7 +60,10 @@ private:
 	//MAVROS
 	ros::Subscriber state_subscriber;
 	void state_cb(const mavros_msgs::State::ConstPtr &msg);
-	bool PX4ConnectionFlag;
+	bool initializationFlag;
+	bool ROSConnectionFlag, ROSDisconnectionFlag;
+	bool PX4ConnectionFlag, PX4DisconnectionFlag;
+	double PX4StateTimer;
 };
 
 }  // namespace px4_gcs

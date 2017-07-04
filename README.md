@@ -26,4 +26,4 @@ In Qtcreator with 'icsl\_gcs.ui' file, add an additional push button.
 * #### define a slot function ####
 Add an additional slot function in main\_window.hpp file with the name `on_NAMEOFPUSHBUTTON_clicked()` (e.g. `on_pushButton_connect_ros_clicked()`).
 * #### fill content of the slot function ####
-Write content in main_window.cpp file.
+Write content in main\_window.cpp file.

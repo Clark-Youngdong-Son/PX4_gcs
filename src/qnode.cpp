@@ -30,7 +30,11 @@ namespace px4_gcs {
 QNode::QNode(int argc, char** argv ) :
 	init_argc(argc),
 	init_argv(argv),
-	PX4ConnectionFlag(false)
+	
+	PX4ConnectionFlag(false), ROSConnectionFlag(false),
+	PX4DisconnectionFlag(false), ROSDisconnectionFlag(false),
+	initializationFlag(false),
+	PX4StateTimer(0.0)
 	{}
 
 QNode::~QNode() {
@@ -41,58 +45,79 @@ QNode::~QNode() {
 	wait();
 }
 
-bool QNode::init() {
-	ros::init(init_argc,init_argv,"px4_gcs");
-	if ( ! ros::master::check() ) {
-		log("Failed to connect ROS master");
-		return false;
-	}
-	ros::start(); // explicitly needed since our nodehandle is going out of scope.
-	ros::NodeHandle n;
-	// Add your ros communications here.
-	chatter_publisher = n.advertise<std_msgs::String>("chatter", 1000);
-	state_subscriber = n.subscribe<mavros_msgs::State>("mavros/state", 1, &QNode::state_cb, this);
-	start();
-	log("Connected to ROS master");
-	return true;
-}
-
-bool QNode::connect_px4()
+bool QNode::init()
 {
-	if( ! ros::master::check() )
+	if(!ROSConnectionFlag)
 	{
-		log("Connect ROS master before connecting PX4");
-		return false;
-	}
-	ros::spinOnce();
-	if(PX4ConnectionFlag)
-	{
-		log("Connected to PX4");
+		ros::init(init_argc,init_argv,"px4_gcs");
+		if (!ros::master::check())
+		{
+			log("Failed to connect ROS master");
+			return false;
+		}
+		ROSConnectionFlag = true;
+		log("Connected to ROS master");
+
+		ros::start(); // explicitly needed since our nodehandle is going out of scope.
+		ros::NodeHandle n;
+
+		chatter_publisher = n.advertise<std_msgs::String>("chatter", 1000);
+		state_subscriber = n.subscribe<mavros_msgs::State>("mavros/state", 1, &QNode::state_cb, this);
+		start();
 		return true;
 	}
 	else
 	{
-		log("Failed to connect PX4");
+		log("Already Connected to ROS master");
+	}
+}
+
+bool QNode::connect_px4()
+{
+	if(!ROSConnectionFlag)
+	{
+		log("Connect ROS master before connecting PX4");
 		return false;
+	}
+	else
+	{
+		ros::spinOnce();
+		if(PX4ConnectionFlag)
+		{
+			log("Connected to PX4");
+			initializationFlag = true;
+			return true;
+		}
+		else
+		{
+			log("Failed to connect PX4");
+			return false;
+		}
 	}
 }
 
 void QNode::run() {
-	ros::Rate loop_rate(1);
-	int count = 0;
-	while ( ros::ok() ) {
+	double rate = 30.0;
+	ros::Rate loop_rate(rate);
 
-		std_msgs::String msg;
-		std::stringstream ss;
-		ss << "hello world " << count;
-		msg.data = ss.str();
-		chatter_publisher.publish(msg);
-		//log(Info,std::string("I sent: ")+msg.data);
+	while ( ros::ok() )
+	{
 		ros::spinOnce();
+
+		PX4StateTimer += 1.0/rate;
+		if(PX4StateTimer>PX4_LOSS_TIME && !PX4DisconnectionFlag)
+		{
+			log("[Error] PX4 signal loss!");
+			PX4DisconnectionFlag = true;
+		}
+		if(PX4DisconnectionFlag && PX4StateTimer<PX4_LOSS_TIME)
+		{
+			log("[Info] PX4 signal regained");
+			PX4DisconnectionFlag = false;
+		}
 		loop_rate.sleep();
-		++count;
 	}
-	std::cout << "Ros shutdown, proceeding to close the gui." << std::endl;
+	log("Ros shutdown, proceeding to close the gui");
 	Q_EMIT rosShutdown(); // used to signal the gui for a shutdown (useful to roslaunch)
 }
 
@@ -109,6 +134,7 @@ void QNode::log(const std::string &msg)
 
 void QNode::state_cb(const mavros_msgs::State::ConstPtr &msg)
 {
+	PX4StateTimer = 0.0;
 	PX4ConnectionFlag = msg->connected;
 }
 
