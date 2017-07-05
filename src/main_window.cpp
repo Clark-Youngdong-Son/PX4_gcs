@@ -168,6 +168,24 @@ ICSL_GCS::ICSL_GCS(int argc, char** argv, QWidget *parent)
 	ui.widget_r->graph(1)->setPen(QPen(QColor(255,110,40)));
 	ui.widget_r->yAxis->setRange(angular_velocity_lim[4],angular_velocity_lim[5]);
 	ui.widget_r->yAxis->setSubTicks(false);
+
+	gainNames.reserve(16);
+	gainNames[0] = "MC_ROLLRATE_I";	
+	gainNames[1] = "MC_PITCHRATE_I";	
+	gainNames[2] = "MC_YAWRATE_I";	
+	gainNames[3] = "MPC_XY_VEL_I";	
+	gainNames[4] = "MPC_Z_VEL_I";	
+	gainNames[5] = "MPC_XY_FF";	
+	gainNames[6] = "MPC_XY_P";	
+	gainNames[7] = "MPC_XY_VEL_P";	
+	gainNames[8] = "MPC_Z_P";	
+	gainNames[9] = "MPC_Z_VEL_P";	
+	gainNames[10] = "MC_ROLL_P";	
+	gainNames[11] = "MC_PITCH_P";	
+	gainNames[12] = "MC_YAW_P";	
+	gainNames[13] = "MC_ROLLRATE_P";	
+	gainNames[14] = "MC_PITCHRATE_P";	
+	gainNames[15] = "MC_YAWRATE_P";	
 }
 
 ICSL_GCS::~ICSL_GCS() {}
@@ -203,6 +221,8 @@ void ICSL_GCS::set_initialization()
 {
 	t_init = ros::Time::now();
 	initializationFlag = true;
+	std::vector<float> gainValues = qnode.subscribeGains(gainNames);
+	showGains(gainValues);
 }
 
 void ICSL_GCS::set_position_data(double x, double y, double z)
@@ -409,6 +429,15 @@ void ICSL_GCS::set_angular_velocity_data(double p, double q, double r)
 		ui.widget_r->yAxis->setRange(r-(angular_velocity_lim[5]-angular_velocity_lim[4])+angular_velocity_margin,r+angular_velocity_margin);
 	}
 	ui.widget_r->replot();
+}
+
+void ICSL_GCS::showGains(std::vector<float> gainValues)
+{
+
+}
+
+void ICSL_GCS::on_gain_1_valueChanged(double value)
+{
 }
 
 }  // namespace px4_gcs
