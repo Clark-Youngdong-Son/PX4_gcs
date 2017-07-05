@@ -8,6 +8,7 @@
 #ifndef px4_gcs_MAIN_WINDOW_H
 #define px4_gcs_MAIN_WINDOW_H
 
+#define QCUSTOMPLOT_USE_LIBRARY
 /*****************************************************************************
 ** Includes
 *****************************************************************************/
@@ -15,6 +16,7 @@
 #include <QtGui/QMainWindow>
 #include "ui_icsl_gcs.h"
 #include "qnode.hpp"
+#include "qcustomplot.h"
 
 /*****************************************************************************
 ** Namespace
