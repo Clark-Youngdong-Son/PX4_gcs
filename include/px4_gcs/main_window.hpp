@@ -14,7 +14,8 @@
 *****************************************************************************/
 
 #include <QtGui/QMainWindow>
-#include "ui_icsl_gcs.h"
+//#include "ui_icsl_gcs.h"
+#include "ui_icsl_gcs2.h"
 #include "qnode.hpp"
 #include "qcustomplot.h"
 #include "ros/ros.h"
