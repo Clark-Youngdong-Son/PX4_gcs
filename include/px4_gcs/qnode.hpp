@@ -21,8 +21,10 @@
 #include <QThread>
 #include <QStringListModel>
 #include <mavros_msgs/State.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/TwistStamped.h>
 
-#define PX4_LOSS_TIME 3
+#define PX4_LOSS_TIME 2.0
 
 /*****************************************************************************
 ** Namespaces
@@ -52,6 +54,11 @@ Q_SIGNALS:
     void rosShutdown();
 	void pushButton_connect_ros_color(bool);
 	void pushButton_connect_px4_color(bool);
+	void emit_initialization();
+	void emit_position_data(double,double,double);
+	void emit_velocity_data(double,double,double);
+	void emit_attitude_data(double,double,double);
+	void emit_angular_velocity_data(double,double,double);
 
 private:
 	int init_argc;
@@ -60,12 +67,17 @@ private:
     QStringListModel logging_model;
 
 	//MAVROS
-	ros::Subscriber state_subscriber;
-	void state_cb(const mavros_msgs::State::ConstPtr &msg);
+	ros::Subscriber state_subscriber, pose_subscriber, twist_subscriber;
+	void state_cb(const mavros_msgs::State::ConstPtr &);
 	bool initializationFlag;
 	bool ROSConnectionFlag, ROSDisconnectionFlag;
 	bool PX4ConnectionFlag, PX4DisconnectionFlag;
 	double PX4StateTimer;
+
+	void pose_cb(const geometry_msgs::PoseStamped::ConstPtr &);
+	void twist_cb(const geometry_msgs::TwistStamped::ConstPtr &);
+	bool poseUpdateFlag, twistUpdateFlag;
+	double x, y, z, vx, vy, vz, roll, pitch, yaw, p, q, r;
 };
 
 }  // namespace px4_gcs

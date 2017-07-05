@@ -34,7 +34,9 @@ QNode::QNode(int argc, char** argv ) :
 	PX4ConnectionFlag(false), ROSConnectionFlag(false),
 	PX4DisconnectionFlag(false), ROSDisconnectionFlag(false),
 	initializationFlag(false),
-	PX4StateTimer(0.0)
+	PX4StateTimer(0.0),
+	poseUpdateFlag(false),twistUpdateFlag(false),
+	x(0.0),y(0.0),z(0.0),vx(0.0),vy(0.0),vz(0.0),roll(0.0),pitch(0.0),yaw(0.0),p(0.0),q(0.0),r(0.0)
 	{}
 
 QNode::~QNode() {
@@ -65,6 +67,8 @@ bool QNode::init()
 
 		chatter_publisher = n.advertise<std_msgs::String>("chatter", 1000);
 		state_subscriber = n.subscribe<mavros_msgs::State>("mavros/state", 1, &QNode::state_cb, this);
+		pose_subscriber = n.subscribe<geometry_msgs::PoseStamped>("mavros/local_position/pose", 1, &QNode::pose_cb, this);
+		twist_subscriber = n.subscribe<geometry_msgs::TwistStamped>("mavros/local_position/velocity", 1, &QNode::twist_cb, this);
 		start();
 		return true;
 	}
@@ -89,6 +93,7 @@ bool QNode::connect_px4()
 		{
 			log("Connected to PX4");
 			Q_EMIT pushButton_connect_px4_color(true);
+			Q_EMIT emit_initialization();
 			initializationFlag = true;
 			return true;
 		}
@@ -124,6 +129,19 @@ void QNode::run() {
 				Q_EMIT pushButton_connect_px4_color(true);
 				PX4DisconnectionFlag = false;
 			}
+
+			if(poseUpdateFlag)
+			{
+				Q_EMIT emit_position_data(x,y,z);
+				Q_EMIT emit_attitude_data(roll,pitch,yaw);
+				poseUpdateFlag = false;
+			}
+			if(twistUpdateFlag)
+			{
+				Q_EMIT emit_velocity_data(vx,vy,vz);
+				Q_EMIT emit_angular_velocity_data(p,q,r);
+				poseUpdateFlag = false;
+			}
 		}
 		loop_rate.sleep();
 	}
@@ -146,6 +164,33 @@ void QNode::state_cb(const mavros_msgs::State::ConstPtr &msg)
 {
 	PX4ConnectionFlag = msg->connected;
 	if(PX4ConnectionFlag) PX4StateTimer = 0.0;
+}
+
+void QNode::pose_cb(const geometry_msgs::PoseStamped::ConstPtr &msg)
+{
+	x = msg->pose.position.x;
+	y = msg->pose.position.y;
+	z = msg->pose.position.z;
+	double q1 = msg->pose.orientation.x;
+	double q2 = msg->pose.orientation.y;
+	double q3 = msg->pose.orientation.z;
+	double q0 = msg->pose.orientation.w;
+
+	roll = 180.0/3.14*atan2(2*(q2*q3+q0*q1),q0*q0-q1*q1-q2*q2+q3*q3);
+	pitch = 180.0/3.14*atan2(-2*(q1*q3-q0*q2),sqrt((2*(q2*q3+q0*q1))*(2*(q2*q3+q0*q1))+(q0*q0-q1*q1-q2*q2+q3*q3)*(q0*q0-q1*q1-q2*q2+q3*q3)));
+	yaw = 180.0/3.14*atan2(2*(q1*q2+q0*q3),q0*q0+q1*q1-q2*q2-q3*q3);
+	poseUpdateFlag = true;
+}
+
+void QNode::twist_cb(const geometry_msgs::TwistStamped::ConstPtr &msg)
+{
+	vx = msg->twist.linear.x;
+	vy = msg->twist.linear.y;
+	vz = msg->twist.linear.z;
+	p = 180.0/3.14*msg->twist.angular.x;
+	q = 180.0/3.14*msg->twist.angular.y;
+	r = 180.0/3.14*msg->twist.angular.z;
+	twistUpdateFlag = true;
 }
 
 }  // namespace px4_gcs

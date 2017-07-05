@@ -17,6 +17,7 @@
 #include "ui_icsl_gcs.h"
 #include "qnode.hpp"
 #include "qcustomplot.h"
+#include "ros/ros.h"
 
 /*****************************************************************************
 ** Namespace
@@ -43,10 +44,21 @@ public Q_SLOTS:
 	void updateLoggingView();
 	void set_pushButton_connect_ros_color(bool);
 	void set_pushButton_connect_px4_color(bool);
+	void set_initialization();
+
+	void set_position_data(double,double,double);
+	void set_velocity_data(double,double,double);
+	void set_attitude_data(double,double,double);
+	void set_angular_velocity_data(double,double,double);
 
 private:
 	Ui::ICSL_GCS ui;
 	QNode qnode;
+	bool initializationFlag;
+	ros::Time t_init;
+	double position_lim[6], velocity_lim[6], attitude_lim[6], angular_velocity_lim[6]; 
+	double position_margin, velocity_margin, attitude_margin, angular_velocity_margin;
+	double position_height, velocity_height, attitude_height, angular_velocity_height;
 };
 
 }  // namespace px4_gcs
