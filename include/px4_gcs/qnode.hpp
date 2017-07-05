@@ -49,6 +49,7 @@ public:
 
 	//MAVROS
 	bool connect_px4();
+	std::vector<float> subscribeGains(std::vector<std::string>);
 Q_SIGNALS:
 	void loggingUpdated();
     void rosShutdown();
@@ -78,6 +79,9 @@ private:
 	void twist_cb(const geometry_msgs::TwistStamped::ConstPtr &);
 	bool poseUpdateFlag, twistUpdateFlag;
 	double x, y, z, vx, vy, vz, roll, pitch, yaw, p, q, r;
+
+	float getGain(std::string);
+	//void setGain(std::string, double);
 };
 
 }  // namespace px4_gcs
