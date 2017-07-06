@@ -51,7 +51,9 @@ public Q_SLOTS:
 	void set_attitude_data(double,double,double);
 	void set_angular_velocity_data(double,double,double);
 
-	void on_gain_1_valueChanged(double);
+	void on_pushButton_set_gain_clicked();
+	void on_pushButton_get_gain_clicked();
+
 private:
 	Ui::ICSL_GCS ui;
 	QNode qnode;
@@ -62,6 +64,7 @@ private:
 	double position_height, velocity_height, attitude_height, angular_velocity_height;
 
 	std::vector<std::string> gainNames;
+	void loadGains();
 	void showGains(std::vector<float>);
 };
 

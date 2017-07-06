@@ -221,8 +221,7 @@ void ICSL_GCS::set_initialization()
 {
 	t_init = ros::Time::now();
 	initializationFlag = true;
-	std::vector<float> gainValues = qnode.subscribeGains(gainNames);
-	showGains(gainValues);
+	loadGains();
 }
 
 void ICSL_GCS::set_position_data(double x, double y, double z)
@@ -431,13 +430,69 @@ void ICSL_GCS::set_angular_velocity_data(double p, double q, double r)
 	ui.widget_r->replot();
 }
 
-void ICSL_GCS::showGains(std::vector<float> gainValues)
+void ICSL_GCS::loadGains()
 {
-
+	bool successFlag = false;
+	std::vector<float> gainValues = qnode.subscribeGains(gainNames, successFlag);
+	if(successFlag)
+	{
+		ui.pushButton_get_gain->setStyleSheet("background-color: rgba(0,255,0,128);");
+		showGains(gainValues);	
+	}
+	else	    	
+	{
+		ui.pushButton_get_gain->setStyleSheet("background-color: rgba(255,0,0,128);");
+	}
 }
 
-void ICSL_GCS::on_gain_1_valueChanged(double value)
+void ICSL_GCS::showGains(std::vector<float> gainValues)
 {
+	ui.gain_1->setValue(gainValues[0]);
+	ui.gain_2->setValue(gainValues[1]);
+	ui.gain_3->setValue(gainValues[2]);
+	ui.gain_4->setValue(gainValues[3]);
+	ui.gain_5->setValue(gainValues[4]);
+	ui.gain_6->setValue(gainValues[5]);
+	ui.gain_7->setValue(gainValues[6]);
+	ui.gain_8->setValue(gainValues[7]);
+	ui.gain_9->setValue(gainValues[8]);
+	ui.gain_10->setValue(gainValues[9]);
+	ui.gain_11->setValue(gainValues[10]);
+	ui.gain_12->setValue(gainValues[11]);
+	ui.gain_13->setValue(gainValues[12]);
+	ui.gain_14->setValue(gainValues[13]);
+	ui.gain_15->setValue(gainValues[14]);
+	ui.gain_16->setValue(gainValues[15]);
+}
+
+void ICSL_GCS::on_pushButton_set_gain_clicked()
+{
+	std::vector<float> gainValues;
+	gainValues.resize(16);
+	gainValues[0] = ui.gain_1->value();
+	gainValues[1] = ui.gain_2->value();
+	gainValues[2] = ui.gain_3->value();
+	gainValues[3] = ui.gain_4->value();
+	gainValues[4] = ui.gain_5->value();
+	gainValues[5] = ui.gain_6->value();
+	gainValues[6] = ui.gain_7->value();
+	gainValues[7] = ui.gain_8->value();
+	gainValues[8] = ui.gain_9->value();
+	gainValues[9] = ui.gain_10->value();
+	gainValues[10] = ui.gain_11->value();
+	gainValues[11] = ui.gain_12->value();
+	gainValues[12] = ui.gain_13->value();
+	gainValues[13] = ui.gain_14->value();
+	gainValues[14] = ui.gain_15->value();
+	gainValues[15] = ui.gain_16->value();
+	bool successFlag = qnode.sendGains(gainNames,gainValues);
+	if(successFlag)	ui.pushButton_set_gain->setStyleSheet("background-color: rgba(0,255,0,128);");
+	else	    	ui.pushButton_set_gain->setStyleSheet("background-color: rgba(255,0,0,128);");
+}
+
+void ICSL_GCS::on_pushButton_get_gain_clicked()
+{
+	loadGains();
 }
 
 }  // namespace px4_gcs

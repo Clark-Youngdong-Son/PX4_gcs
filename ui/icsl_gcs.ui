@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1216</width>
+    <width>1349</width>
     <height>816</height>
    </rect>
   </property>
@@ -663,7 +663,7 @@
      <rect>
       <x>0</x>
       <y>590</y>
-      <width>1171</width>
+      <width>1351</width>
       <height>16</height>
      </rect>
     </property>
@@ -676,7 +676,7 @@
      <rect>
       <x>0</x>
       <y>596</y>
-      <width>1171</width>
+      <width>1351</width>
       <height>16</height>
      </rect>
     </property>
@@ -713,6 +713,9 @@
       <height>27</height>
      </rect>
     </property>
+    <property name="singleStep">
+     <double>0.010000000000000</double>
+    </property>
    </widget>
    <widget class="Line" name="line_11">
     <property name="geometry">
@@ -744,9 +747,9 @@
     <property name="geometry">
      <rect>
       <x>70</x>
-      <y>610</y>
+      <y>620</y>
       <width>321</width>
-      <height>41</height>
+      <height>16</height>
      </rect>
     </property>
     <property name="orientation">
@@ -807,6 +810,9 @@
       <height>27</height>
      </rect>
     </property>
+    <property name="singleStep">
+     <double>0.010000000000000</double>
+    </property>
    </widget>
    <widget class="QDoubleSpinBox" name="gain_3">
     <property name="geometry">
@@ -816,6 +822,9 @@
       <width>69</width>
       <height>27</height>
      </rect>
+    </property>
+    <property name="singleStep">
+     <double>0.010000000000000</double>
     </property>
    </widget>
    <widget class="QDoubleSpinBox" name="gain_4">
@@ -827,6 +836,9 @@
       <height>27</height>
      </rect>
     </property>
+    <property name="singleStep">
+     <double>0.010000000000000</double>
+    </property>
    </widget>
    <widget class="QDoubleSpinBox" name="gain_6">
     <property name="geometry">
@@ -836,6 +848,9 @@
       <width>69</width>
       <height>27</height>
      </rect>
+    </property>
+    <property name="singleStep">
+     <double>0.010000000000000</double>
     </property>
    </widget>
    <widget class="QDoubleSpinBox" name="gain_5">
@@ -847,6 +862,9 @@
       <height>27</height>
      </rect>
     </property>
+    <property name="singleStep">
+     <double>0.010000000000000</double>
+    </property>
    </widget>
    <widget class="QDoubleSpinBox" name="gain_8">
     <property name="geometry">
@@ -857,6 +875,9 @@
       <height>27</height>
      </rect>
     </property>
+    <property name="singleStep">
+     <double>0.010000000000000</double>
+    </property>
    </widget>
    <widget class="QDoubleSpinBox" name="gain_7">
     <property name="geometry">
@@ -866,6 +887,9 @@
       <width>69</width>
       <height>27</height>
      </rect>
+    </property>
+    <property name="singleStep">
+     <double>0.010000000000000</double>
     </property>
    </widget>
    <widget class="QLabel" name="label_21">
@@ -1061,9 +1085,9 @@
     <property name="geometry">
      <rect>
       <x>480</x>
-      <y>610</y>
+      <y>620</y>
       <width>311</width>
-      <height>41</height>
+      <height>16</height>
      </rect>
     </property>
     <property name="orientation">
@@ -1073,10 +1097,10 @@
    <widget class="Line" name="line_19">
     <property name="geometry">
      <rect>
-      <x>480</x>
-      <y>740</y>
+      <x>478</x>
+      <y>750</y>
       <width>311</width>
-      <height>41</height>
+      <height>21</height>
      </rect>
     </property>
     <property name="orientation">
@@ -1141,6 +1165,9 @@
       <height>27</height>
      </rect>
     </property>
+    <property name="singleStep">
+     <double>0.010000000000000</double>
+    </property>
    </widget>
    <widget class="QDoubleSpinBox" name="gain_10">
     <property name="geometry">
@@ -1150,6 +1177,9 @@
       <width>69</width>
       <height>27</height>
      </rect>
+    </property>
+    <property name="singleStep">
+     <double>0.010000000000000</double>
     </property>
    </widget>
    <widget class="QDoubleSpinBox" name="gain_13">
@@ -1161,14 +1191,17 @@
       <height>27</height>
      </rect>
     </property>
+    <property name="singleStep">
+     <double>0.010000000000000</double>
+    </property>
    </widget>
    <widget class="Line" name="line_21">
     <property name="geometry">
      <rect>
       <x>873</x>
-      <y>610</y>
+      <y>620</y>
       <width>311</width>
-      <height>41</height>
+      <height>16</height>
      </rect>
     </property>
     <property name="orientation">
@@ -1233,6 +1266,9 @@
       <height>27</height>
      </rect>
     </property>
+    <property name="singleStep">
+     <double>0.010000000000000</double>
+    </property>
    </widget>
    <widget class="Line" name="line_23">
     <property name="geometry">
@@ -1250,10 +1286,10 @@
    <widget class="Line" name="line_24">
     <property name="geometry">
      <rect>
-      <x>873</x>
-      <y>740</y>
+      <x>871</x>
+      <y>752</y>
       <width>311</width>
-      <height>41</height>
+      <height>16</height>
      </rect>
     </property>
     <property name="orientation">
@@ -1306,6 +1342,9 @@
       <height>27</height>
      </rect>
     </property>
+    <property name="singleStep">
+     <double>0.010000000000000</double>
+    </property>
    </widget>
    <widget class="QDoubleSpinBox" name="gain_16">
     <property name="geometry">
@@ -1315,6 +1354,9 @@
       <width>69</width>
       <height>27</height>
      </rect>
+    </property>
+    <property name="singleStep">
+     <double>0.010000000000000</double>
     </property>
    </widget>
    <widget class="Line" name="line_25">
@@ -1339,6 +1381,9 @@
       <height>27</height>
      </rect>
     </property>
+    <property name="singleStep">
+     <double>0.010000000000000</double>
+    </property>
    </widget>
    <widget class="QDoubleSpinBox" name="gain_15">
     <property name="geometry">
@@ -1348,6 +1393,9 @@
       <width>69</width>
       <height>27</height>
      </rect>
+    </property>
+    <property name="singleStep">
+     <double>0.010000000000000</double>
     </property>
    </widget>
    <widget class="QLabel" name="label_36">
@@ -1404,13 +1452,39 @@
      <string>MC_YAW_P</string>
     </property>
    </widget>
+   <widget class="QPushButton" name="pushButton_set_gain">
+    <property name="geometry">
+     <rect>
+      <x>1210</x>
+      <y>660</y>
+      <width>131</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Set Gains</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_get_gain">
+    <property name="geometry">
+     <rect>
+      <x>1210</x>
+      <y>700</y>
+      <width>131</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Get Gains</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1216</width>
+     <width>1349</width>
      <height>25</height>
     </rect>
    </property>

@@ -69,6 +69,8 @@ bool QNode::init()
 		state_subscriber = n.subscribe<mavros_msgs::State>("mavros/state", 1, &QNode::state_cb, this);
 		pose_subscriber = n.subscribe<geometry_msgs::PoseStamped>("mavros/local_position/pose", 1, &QNode::pose_cb, this);
 		twist_subscriber = n.subscribe<geometry_msgs::TwistStamped>("mavros/local_position/velocity", 1, &QNode::twist_cb, this);
+		get_gain_client = n.serviceClient<mavros_msgs::ParamGet>("mavros/param/get");
+		set_gain_client = n.serviceClient<mavros_msgs::ParamSet>("mavros/param/set");
 		start();
 		return true;
 	}
@@ -88,20 +90,24 @@ bool QNode::connect_px4()
 	}
 	else
 	{
-		ros::spinOnce();
-		if(PX4ConnectionFlag)
-		{
-			log("Connected to PX4");
-			Q_EMIT pushButton_connect_px4_color(true);
-			Q_EMIT emit_initialization();
-			initializationFlag = true;
-			return true;
-		}
+		if(initializationFlag) log("Already connected to PX4");
 		else
 		{
-			log("Failed to connect PX4");
-			Q_EMIT pushButton_connect_px4_color(false);
-			return false;
+			ros::spinOnce();
+			if(PX4ConnectionFlag)
+			{
+				log("Connected to PX4");
+				initializationFlag = true;
+				Q_EMIT pushButton_connect_px4_color(true);
+				Q_EMIT emit_initialization();
+				return true;
+			}
+			else
+			{
+				log("Failed to connect PX4");
+				Q_EMIT pushButton_connect_px4_color(false);
+				return false;
+			}
 		}
 	}
 }
@@ -193,21 +199,75 @@ void QNode::twist_cb(const geometry_msgs::TwistStamped::ConstPtr &msg)
 	twistUpdateFlag = true;
 }
 
-std::vector<float> QNode::subscribeGains(std::vector<std::string> gainNames)
+std::vector<float> QNode::subscribeGains(std::vector<std::string> gainNames, bool &successFlag)
 {
-	std::vector<float> gainValues;
-	gainValues.resize(gainNames.size());
-	for(int i=0; i<gainNames.size(); i++)
+	if(initializationFlag)
 	{
-		float temp = 0.0f;
-		gainValues.push_back(getGain(gainNames[i]));
+		std::vector<float> gainValues;
+		gainValues.resize(gainNames.size());
+		successFlag = true;
+		for(int i=0; i<gainNames.size(); i++)
+		{
+			float gain = getGain(gainNames[i]);
+			if(gain==99.0f) successFlag = false;
+			gainValues[i] = gain;
+		}
+		if(successFlag) log("Gain get finished");
+		else log("Gain get failed");
+		return gainValues;
 	}
-	return gainValues;
+	else
+	{
+		log("Connect both ROS and PX4 first");
+		successFlag = false;
+		std::vector<float> empty;
+		empty.resize(gainNames.size());
+		return empty;
+	}
 }
 
-float QNode::getGain(std::string name)
+float QNode::getGain(std::string gainName)
 {
-
+	paramget_srv.request.param_id = gainName;
+	get_gain_client.call(paramget_srv);
+	if(paramget_srv.response.success) return paramget_srv.response.value.real;
+	else return 99.0f;
 } 
+
+bool QNode::sendGains(std::vector<std::string> gainNames, std::vector<float> gainValues)
+{
+	if(initializationFlag)
+	{
+		int data_num = gainNames.size();
+		bool successFlag = true;
+		for(int i=0; i<data_num; i++)
+		{
+			successFlag &= setGain(gainNames[i],gainValues[i]);
+		}
+		if(successFlag)
+		{
+			log("Gain set finished");
+		}
+		else
+		{
+			log("Gain set failed");
+		}
+		return successFlag;
+	}
+	else
+	{
+		log("Connect both ROS and PX4 first");
+		return false;
+	}
+}
+
+bool QNode::setGain(std::string gainName, float gainValue)
+{
+	paramset_srv.request.param_id = gainName;
+	paramset_srv.request.value.real     = gainValue;
+	set_gain_client.call(paramset_srv);
+	if(paramset_srv.response.success) return true;
+	else return false;
+}
 
 }  // namespace px4_gcs

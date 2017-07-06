@@ -21,6 +21,8 @@
 #include <QThread>
 #include <QStringListModel>
 #include <mavros_msgs/State.h>
+#include <mavros_msgs/ParamGet.h>
+#include <mavros_msgs/ParamSet.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
 
@@ -49,7 +51,9 @@ public:
 
 	//MAVROS
 	bool connect_px4();
-	std::vector<float> subscribeGains(std::vector<std::string>);
+	std::vector<float> subscribeGains(std::vector<std::string>, bool &);
+	bool sendGains(std::vector<std::string>, std::vector<float>);
+
 Q_SIGNALS:
 	void loggingUpdated();
     void rosShutdown();
@@ -69,6 +73,7 @@ private:
 
 	//MAVROS
 	ros::Subscriber state_subscriber, pose_subscriber, twist_subscriber;
+	ros::ServiceClient get_gain_client, set_gain_client;
 	void state_cb(const mavros_msgs::State::ConstPtr &);
 	bool initializationFlag;
 	bool ROSConnectionFlag, ROSDisconnectionFlag;
@@ -80,8 +85,10 @@ private:
 	bool poseUpdateFlag, twistUpdateFlag;
 	double x, y, z, vx, vy, vz, roll, pitch, yaw, p, q, r;
 
+	mavros_msgs::ParamGet paramget_srv;
+	mavros_msgs::ParamSet paramset_srv;
 	float getGain(std::string);
-	//void setGain(std::string, double);
+	bool setGain(std::string, float);
 };
 
 }  // namespace px4_gcs
