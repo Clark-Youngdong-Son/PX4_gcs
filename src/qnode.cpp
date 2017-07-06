@@ -196,7 +196,7 @@ void QNode::twist_cb(const geometry_msgs::TwistStamped::ConstPtr &msg)
 std::vector<float> QNode::subscribeGains(std::vector<std::string> gainNames)
 {
 	std::vector<float> gainValues;
-	gainValues.reserve(gainNames.size());
+	gainValues.resize(gainNames.size());
 	for(int i=0; i<gainNames.size(); i++)
 	{
 		float temp = 0.0f;

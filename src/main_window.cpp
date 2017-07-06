@@ -169,7 +169,7 @@ ICSL_GCS::ICSL_GCS(int argc, char** argv, QWidget *parent)
 	ui.widget_r->yAxis->setRange(angular_velocity_lim[4],angular_velocity_lim[5]);
 	ui.widget_r->yAxis->setSubTicks(false);
 
-	gainNames.reserve(16);
+	gainNames.resize(16);
 	gainNames[0] = "MC_ROLLRATE_I";	
 	gainNames[1] = "MC_PITCHRATE_I";	
 	gainNames[2] = "MC_YAWRATE_I";	
