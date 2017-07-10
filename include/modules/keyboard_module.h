@@ -18,6 +18,7 @@ class KeyboardModule : public Module
 		KeyboardModule( QWidget*, QObject* );
 		~KeyboardModule();
 
+		void connect();
 		void log( const std::string );
 
 	private:

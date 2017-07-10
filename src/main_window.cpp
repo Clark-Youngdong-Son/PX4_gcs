@@ -58,6 +58,7 @@ ICSL_GCS::ICSL_GCS(int argc, char** argv, QWidget *parent)
 	param->add_widget( ui.tbl_3 );
 
 	keyboard = new KeyboardModule( ui.centralwidget, this );
+	keyboard->connect();
 
 	setupGraph();
 }
