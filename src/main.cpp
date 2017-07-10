@@ -12,11 +12,3 @@ int main(int argc, char **argv)
 
 	return result;
 }
-
-//#include "modules/parsing_module.h"
-//
-//int main(int argc, char** argv)
-//{
-//	px4_gcs::ParsingModule parser;
-//	return 0;
-//}
