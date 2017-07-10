@@ -1,27 +1,9 @@
-/**
- * @file /src/main.cpp
- *
- * @brief Qt based gui.
- *
- * @date November 2010
- **/
-/*****************************************************************************
-** Includes
-*****************************************************************************/
-
 #include <QtGui>
 #include <QApplication>
-#include "../include/px4_gcs/main_window.hpp"
+#include "main_window.hpp"
 
-/*****************************************************************************
-** Main
-*****************************************************************************/
-
-int main(int argc, char **argv) {
-
-    /*********************
-    ** Qt
-    **********************/
+int main(int argc, char **argv) 
+{
     QApplication app(argc, argv);
     px4_gcs::ICSL_GCS w(argc,argv);
     w.show();
@@ -30,3 +12,11 @@ int main(int argc, char **argv) {
 
 	return result;
 }
+
+//#include "modules/parsing_module.h"
+//
+//int main(int argc, char** argv)
+//{
+//	px4_gcs::ParsingModule parser;
+//	return 0;
+//}

@@ -1,46 +1,22 @@
-/**
- * @file /src/qnode.cpp
- *
- * @brief Ros communication central!
- *
- * @date February 2011
- **/
+#include "qnode.hpp"
 
-/*****************************************************************************
-** Includes
-*****************************************************************************/
-
-#include <ros/ros.h>
-#include <ros/network.h>
-#include <string>
-#include <std_msgs/String.h>
-#include <sstream>
-#include "../include/px4_gcs/qnode.hpp"
-
-/*****************************************************************************
-** Namespaces
-*****************************************************************************/
-
-namespace px4_gcs {
-
-/*****************************************************************************
-** Implementation
-*****************************************************************************/
+namespace px4_gcs 
+{
 
 QNode::QNode(int argc, char** argv ) :
 	init_argc(argc),
-	init_argv(argv),
-	
+	init_argv(argv),	
 	PX4ConnectionFlag(false), ROSConnectionFlag(false),
 	PX4DisconnectionFlag(false), ROSDisconnectionFlag(false),
 	initializationFlag(false),
 	PX4StateTimer(0.0),
-	poseUpdateFlag(false),twistUpdateFlag(false),
-	x(0.0),y(0.0),z(0.0),vx(0.0),vy(0.0),vz(0.0),roll(0.0),pitch(0.0),yaw(0.0),p(0.0),q(0.0),r(0.0)
+	lpePoseUpdateFlag(false),lpeTwistUpdateFlag(false),spUpdateFlag(false),rpUpdateFlag(false)
 	{}
 
-QNode::~QNode() {
-    if(ros::isStarted()) {
+QNode::~QNode() 
+{
+    if(ros::isStarted()) 
+	{
       ros::shutdown(); // explicitly needed since we use ros::start();
       ros::waitForShutdown();
     }
@@ -65,10 +41,19 @@ bool QNode::init()
 		ros::start(); // explicitly needed since our nodehandle is going out of scope.
 		ros::NodeHandle n;
 
+		t_init = ros::Time::now();
+
 		chatter_publisher = n.advertise<std_msgs::String>("chatter", 1000);
 		state_subscriber = n.subscribe<mavros_msgs::State>("mavros/state", 1, &QNode::state_cb, this);
-		pose_subscriber = n.subscribe<geometry_msgs::PoseStamped>("mavros/local_position/pose", 1, &QNode::pose_cb, this);
-		twist_subscriber = n.subscribe<geometry_msgs::TwistStamped>("mavros/local_position/velocity", 1, &QNode::twist_cb, this);
+		lpe_pose_subscriber = n.subscribe<geometry_msgs::PoseStamped>(
+				"mavros/local_position/pose", 1, &QNode::lpe_pose_cb, this);
+		lpe_twist_subscriber = n.subscribe<geometry_msgs::TwistStamped>(
+				"mavros/local_position/velocity", 1, &QNode::lpe_twist_cb, this);
+		sp_subscriber = n.subscribe<mavros_msgs::PositionTarget>(
+				"mavros/setpoint_raw/local", 1, &QNode::sp_cb, this);
+		rp_subscriber = n.subscribe<mavros_msgs::RollPitchTarget>(
+				"mavros/rp_target", 1, &QNode::rp_cb, this);
+
 		get_gain_client = n.serviceClient<mavros_msgs::ParamGet>("mavros/param/get");
 		set_gain_client = n.serviceClient<mavros_msgs::ParamSet>("mavros/param/set");
 		start();
@@ -136,17 +121,54 @@ void QNode::run() {
 				PX4DisconnectionFlag = false;
 			}
 
-			if(poseUpdateFlag)
+			if(lpePoseUpdateFlag)
 			{
-				Q_EMIT emit_position_data(x,y,z);
-				Q_EMIT emit_attitude_data(roll,pitch,yaw);
-				poseUpdateFlag = false;
+				double x = lpe_pose.pose.position.x;
+				double y = lpe_pose.pose.position.y;
+				double z = lpe_pose.pose.position.z;
+				double roll, pitch, yaw;
+				q2e( lpe_pose.pose.orientation, roll, pitch, yaw);
+
+				double t = (lpe_pose.header.stamp - t_init).toSec();
+
+				Q_EMIT emit_lpe_position_data(x,y,z,t);
+				Q_EMIT emit_lpe_attitude_data(roll,pitch,yaw,t);
+				lpePoseUpdateFlag = false;
 			}
-			if(twistUpdateFlag)
+			if(lpeTwistUpdateFlag)
 			{
-				Q_EMIT emit_velocity_data(vx,vy,vz);
-				Q_EMIT emit_angular_velocity_data(p,q,r);
-				poseUpdateFlag = false;
+				double vx = lpe_twist.twist.linear.x;
+				double vy = lpe_twist.twist.linear.y;
+				double vz = lpe_twist.twist.linear.z;
+				double p = 180.0/3.14*lpe_twist.twist.angular.x;
+				double q = 180.0/3.14*lpe_twist.twist.angular.y;
+				double r = 180.0/3.14*lpe_twist.twist.angular.z;
+				
+				double t = (lpe_twist.header.stamp - t_init).toSec();
+
+				Q_EMIT emit_lpe_linear_velocity_data(vx,vy,vz,t);
+				Q_EMIT emit_lpe_angular_velocity_data(p,q,r,t);
+				lpeTwistUpdateFlag = false;
+			}
+			if(spUpdateFlag)
+			{
+				double x = sp.position.x;
+				double y = sp.position.y;
+				double z = sp.position.z;
+
+				double t = (sp.header.stamp - t_init).toSec();
+
+				Q_EMIT emit_sp_position_data(x,y,z,t);
+				spUpdateFlag = false;
+			}
+			if(rpUpdateFlag)
+			{
+				double r_target = (180.0/3.14)*rp.roll_target;
+				double p_target = -(180.0/3.14)*rp.pitch_target; //// coordination problem..
+
+				double t = (rp.header.stamp - t_init).toSec();
+
+				Q_EMIT emit_rp_target_data(r_target, p_target, t);
 			}
 		}
 		loop_rate.sleep();
@@ -158,12 +180,7 @@ void QNode::run() {
 
 void QNode::log(const std::string &msg)
 {
-	logging_model.insertRows(logging_model.rowCount(),1);
-	std::stringstream logging_model_msg;
-	logging_model_msg<<msg;
-	QVariant new_row(QString(logging_model_msg.str().c_str()));
-	logging_model.setData(logging_model.index(logging_model.rowCount()-1),new_row);
-	Q_EMIT loggingUpdated(); // used to readjust the scrollbar
+	Q_EMIT emit_log_message( msg );
 }
 
 void QNode::state_cb(const mavros_msgs::State::ConstPtr &msg)
@@ -172,86 +189,82 @@ void QNode::state_cb(const mavros_msgs::State::ConstPtr &msg)
 	if(PX4ConnectionFlag) PX4StateTimer = 0.0;
 }
 
-void QNode::pose_cb(const geometry_msgs::PoseStamped::ConstPtr &msg)
+void QNode::lpe_pose_cb(const geometry_msgs::PoseStamped::ConstPtr &msg)
 {
-	x = msg->pose.position.x;
-	y = msg->pose.position.y;
-	z = msg->pose.position.z;
-	double q1 = msg->pose.orientation.x;
-	double q2 = msg->pose.orientation.y;
-	double q3 = msg->pose.orientation.z;
-	double q0 = msg->pose.orientation.w;
-
-	roll = 180.0/3.14*atan2(2*(q2*q3+q0*q1),q0*q0-q1*q1-q2*q2+q3*q3);
-	pitch = 180.0/3.14*atan2(-2*(q1*q3-q0*q2),sqrt((2*(q2*q3+q0*q1))*(2*(q2*q3+q0*q1))+(q0*q0-q1*q1-q2*q2+q3*q3)*(q0*q0-q1*q1-q2*q2+q3*q3)));
-	yaw = 180.0/3.14*atan2(2*(q1*q2+q0*q3),q0*q0+q1*q1-q2*q2-q3*q3);
-	poseUpdateFlag = true;
+	lpe_pose = *msg;
+	lpePoseUpdateFlag = true;
 }
 
-void QNode::twist_cb(const geometry_msgs::TwistStamped::ConstPtr &msg)
+void QNode::lpe_twist_cb(const geometry_msgs::TwistStamped::ConstPtr &msg)
 {
-	vx = msg->twist.linear.x;
-	vy = msg->twist.linear.y;
-	vz = msg->twist.linear.z;
-	p = 180.0/3.14*msg->twist.angular.x;
-	q = 180.0/3.14*msg->twist.angular.y;
-	r = 180.0/3.14*msg->twist.angular.z;
-	twistUpdateFlag = true;
+	lpe_twist = *msg;
+	lpeTwistUpdateFlag = true;
 }
 
-std::vector<float> QNode::subscribeGains(std::vector<std::string> gainNames, bool &successFlag)
+void QNode::sp_cb(const mavros_msgs::PositionTarget::ConstPtr &msg)
+{
+	sp = *msg;
+	spUpdateFlag = true;
+}
+
+void QNode::rp_cb(const mavros_msgs::RollPitchTarget::ConstPtr &msg)
+{
+	rp = *msg;
+	rpUpdateFlag = true;
+}
+
+std::vector<double> QNode::subscribeGains(std::vector<std::string> gainNames, bool &successFlag)
 {
 	if(initializationFlag)
 	{
-		std::vector<float> gainValues;
-		gainValues.resize(gainNames.size());
 		successFlag = true;
-		for(int i=0; i<gainNames.size(); i++)
+		
+		std::vector<double> _values;
+
+		for(unsigned int i=0; i<gainNames.size(); i++)
 		{
-			float gain = getGain(gainNames[i]);
+			double gain = getGain(gainNames[i]);
 			if(gain==99.0f) successFlag = false;
-			gainValues[i] = gain;
+				_values.push_back( gain );
 		}
+
 		if(successFlag) log("Gain get finished");
 		else log("Gain get failed");
-		return gainValues;
+		return _values;
 	}
 	else
 	{
 		log("Connect both ROS and PX4 first");
 		successFlag = false;
-		std::vector<float> empty;
-		empty.resize(gainNames.size());
+		std::vector<double> empty;
 		return empty;
 	}
 }
 
-float QNode::getGain(std::string gainName)
+double QNode::getGain(std::string gainName)
 {
 	paramget_srv.request.param_id = gainName;
 	get_gain_client.call(paramget_srv);
-	if(paramget_srv.response.success) return paramget_srv.response.value.real;
-	else return 99.0f;
+	if(paramget_srv.response.success) return (double)paramget_srv.response.value.real;
+	else return 99.0;
 } 
 
-bool QNode::sendGains(std::vector<std::string> gainNames, std::vector<float> gainValues)
+bool QNode::publishGains(std::vector<std::string> gainNames, std::vector<double> gainValues)
 {
 	if(initializationFlag)
 	{
-		int data_num = gainNames.size();
 		bool successFlag = true;
-		for(int i=0; i<data_num; i++)
+		
+		for(unsigned int i=0; i<gainNames.size(); i++)
 		{
 			successFlag &= setGain(gainNames[i],gainValues[i]);
 		}
+
 		if(successFlag)
-		{
 			log("Gain set finished");
-		}
 		else
-		{
 			log("Gain set failed");
-		}
+		
 		return successFlag;
 	}
 	else
@@ -261,13 +274,38 @@ bool QNode::sendGains(std::vector<std::string> gainNames, std::vector<float> gai
 	}
 }
 
-bool QNode::setGain(std::string gainName, float gainValue)
+bool QNode::setGain(std::string gainName, double gainValue)
 {
-	paramset_srv.request.param_id = gainName;
-	paramset_srv.request.value.real     = gainValue;
+	paramset_srv.request.param_id 		= gainName;
+	paramset_srv.request.value.real 	= (float)gainValue;
 	set_gain_client.call(paramset_srv);
 	if(paramset_srv.response.success) return true;
 	else return false;
+}
+
+void q2e(const double q0, const double q1, const double q2, const double q3, 
+		double& roll, double& pitch, double& yaw)
+{
+	roll = 180.0/3.14*atan2(2*(q2*q3+q0*q1),q0*q0-q1*q1-q2*q2+q3*q3);
+	pitch = 180.0/3.14*atan2(-2*(q1*q3-q0*q2),sqrt((2*(q2*q3+q0*q1))*(2*(q2*q3+q0*q1))+(q0*q0-q1*q1-q2*q2+q3*q3)*(q0*q0-q1*q1-q2*q2+q3*q3)));
+	yaw = 180.0/3.14*atan2(2*(q1*q2+q0*q3),q0*q0+q1*q1-q2*q2-q3*q3);
+}
+void q2e(const geometry_msgs::Quaternion q, double& roll, double& pitch, double& yaw)
+{
+	double ysqr = q.y * q.y;
+
+	double t0 = 2.0 * (q.w * q.x + q.y * q.z);
+	double t1 = 1.0 - 2.0 * (q.x * q.x + ysqr);
+	roll = (180.0/3.14)*std::atan2(t0, t1);
+
+	double t2 = 2.0 * (q.w * q.y - q.z * q.x);
+	t2 = ((t2 > 1.0) ? 1.0 : t2);
+	t2 = ((t2 < -1.0) ? -1.0 : t2);
+	pitch = (180.0/3.14)*std::asin(t2);
+
+	double t3 = 2.0 * (q.w * q.z + q.x * q.y);
+	double t4 = 1.0 - 2.0 * (ysqr + q.z * q.z);
+	yaw = (180.0/3.14)*std::atan2(t3, t4);
 }
 
 }  // namespace px4_gcs
