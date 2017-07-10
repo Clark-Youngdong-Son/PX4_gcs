@@ -48,7 +48,7 @@ ICSL_GCS::ICSL_GCS(int argc, char** argv, QWidget *parent)
 	QObject::connect(&qnode, 
 			SIGNAL(emit_rp_target_data(double,double,double)), this, 
 			SLOT(set_rp_target_data(double,double,double))); 
-	
+
 	logger = new LoggingModule( ui.view_logging );
 	
 	param = new ParameterModule();
@@ -57,6 +57,8 @@ ICSL_GCS::ICSL_GCS(int argc, char** argv, QWidget *parent)
 	param->add_widget( ui.tbl_2 );
 	param->add_widget( ui.tbl_3 );
 
+	keyboard = new KeyboardModule( ui.centralwidget, this );
+
 	setupGraph();
 }
 
@@ -64,11 +66,12 @@ ICSL_GCS::~ICSL_GCS()
 {
 	delete logger;
 	delete param;
+	delete keyboard;
 }
 
 void ICSL_GCS::set_log_message(const std::string &msg)
 {
-	logger->log( msg );
+	log( msg );
 }
 
 void ICSL_GCS::on_pushButton_connect_ros_clicked()

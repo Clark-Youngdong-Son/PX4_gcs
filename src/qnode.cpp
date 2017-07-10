@@ -10,7 +10,8 @@ QNode::QNode(int argc, char** argv ) :
 	PX4DisconnectionFlag(false), ROSDisconnectionFlag(false),
 	initializationFlag(false),
 	PX4StateTimer(0.0),
-	lpePoseUpdateFlag(false),lpeTwistUpdateFlag(false),spUpdateFlag(false),rpUpdateFlag(false)
+	lpePoseUpdateFlag(false),lpeTwistUpdateFlag(false),rpUpdateFlag(false),
+	spInitializedFlag(false)
 	{}
 
 QNode::~QNode() 
@@ -43,19 +44,26 @@ bool QNode::init()
 
 		t_init = ros::Time::now();
 
-		chatter_publisher = n.advertise<std_msgs::String>("chatter", 1000);
-		state_subscriber = n.subscribe<mavros_msgs::State>("mavros/state", 1, &QNode::state_cb, this);
-		lpe_pose_subscriber = n.subscribe<geometry_msgs::PoseStamped>(
-				"mavros/local_position/pose", 1, &QNode::lpe_pose_cb, this);
-		lpe_twist_subscriber = n.subscribe<geometry_msgs::TwistStamped>(
-				"mavros/local_position/velocity", 1, &QNode::lpe_twist_cb, this);
-		sp_subscriber = n.subscribe<mavros_msgs::PositionTarget>(
-				"mavros/setpoint_raw/local", 1, &QNode::sp_cb, this);
-		rp_subscriber = n.subscribe<mavros_msgs::RollPitchTarget>(
-				"mavros/rp_target", 1, &QNode::rp_cb, this);
+		// Subscription
+		state_subscriber = n.subscribe<mavros_msgs::State>
+			("mavros/state", 1, &QNode::state_cb, this);
+		lpe_pose_subscriber = n.subscribe<geometry_msgs::PoseStamped>
+			("mavros/local_position/pose", 1, &QNode::lpe_pose_cb, this);
+		lpe_twist_subscriber = n.subscribe<geometry_msgs::TwistStamped>
+			("mavros/local_position/velocity", 1, &QNode::lpe_twist_cb, this);
+		rp_subscriber = n.subscribe<mavros_msgs::RollPitchTarget>
+			("mavros/rp_target", 1, &QNode::rp_cb, this);
 
+		// Publication
+		sp_publisher = n.advertise<mavros_msgs::PositionTarget>
+			("mavros/setpoint_raw/local", 1);
+
+		// Services
 		get_gain_client = n.serviceClient<mavros_msgs::ParamGet>("mavros/param/get");
 		set_gain_client = n.serviceClient<mavros_msgs::ParamSet>("mavros/param/set");
+		arming_client = n.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
+		set_mode_client = n.serviceClient<mavros_msgs::SetMode>("mavros/set_mode");
+
 		start();
 		return true;
 	}
@@ -63,6 +71,84 @@ bool QNode::init()
 	{
 		log("Already Connected to ROS master");
 	}
+}
+
+void QNode::setArm()
+{
+	bool success = false;
+
+	if(PX4ConnectionFlag)
+	{
+		if(current_state.armed) // px4 is already armed.
+		{
+			log( "PX4 is already armed" );
+			success = true;
+		}
+		else // px4 is disarmed, so try to arm.
+		{
+			arm_cmd.request.value = true;
+			if( arming_client.call(arm_cmd) && arm_cmd.response.success )
+			{
+				log("Armed");
+				initializeSetpoint();
+				success = true;
+			}
+			else
+			{
+				log("Arming failed");
+				success = false;
+			}
+		}
+	}
+	else
+	{
+		log("Connect PX4 first");
+		success = false;
+	}
+}
+
+void QNode::setDisarm()
+{
+	bool success = false;
+
+	if(PX4ConnectionFlag)
+	{
+		if(!current_state.armed) // px4 is already armed.
+		{
+			log( "PX4 is already disarmed" );
+			success = true;
+		}
+		else // px4 is disarmed, so try to arm.
+		{
+			arm_cmd.request.value = false;
+			if( arming_client.call(arm_cmd) && arm_cmd.response.success )
+			{
+				log("Disarmed");
+				success = true;
+			}
+			else
+			{
+				log("Disarming failed");
+				success = false;
+			}
+		}
+	}
+	else
+	{
+		log("Connect PX4 first");
+		success = false;
+	}
+}
+
+void QNode::setOffboard()
+{
+	mavros_msgs::SetMode set_mode;
+	set_mode.request.custom_mode = "OFFBOARD";
+
+	if(set_mode_client.call(set_mode) && set_mode.response.success)
+		log("Offboard mode enabled");
+	else
+		log("Offboard mode transition falied");
 }
 
 bool QNode::connect_px4()
@@ -97,7 +183,8 @@ bool QNode::connect_px4()
 	}
 }
 
-void QNode::run() {
+void QNode::run() 
+{
 	double rate = 30.0;
 	ros::Rate loop_rate(rate);
 
@@ -150,17 +237,6 @@ void QNode::run() {
 				Q_EMIT emit_lpe_angular_velocity_data(p,q,r,t);
 				lpeTwistUpdateFlag = false;
 			}
-			if(spUpdateFlag)
-			{
-				double x = sp.position.x;
-				double y = sp.position.y;
-				double z = sp.position.z;
-
-				double t = (sp.header.stamp - t_init).toSec();
-
-				Q_EMIT emit_sp_position_data(x,y,z,t);
-				spUpdateFlag = false;
-			}
 			if(rpUpdateFlag)
 			{
 				double r_target = (180.0/3.14)*rp.roll_target;
@@ -170,6 +246,18 @@ void QNode::run() {
 
 				Q_EMIT emit_rp_target_data(r_target, p_target, t);
 			}
+			if(spInitializedFlag)
+			{
+				sp.header.stamp = ros::Time::now();
+				sp_publisher.publish( sp );	
+
+				double x = sp.position.x;
+				double y = sp.position.y;
+				double z = sp.position.z;
+				double t = (sp.header.stamp - t_init).toSec();
+
+				Q_EMIT emit_sp_position_data(x,y,z,t);
+			}
 		}
 		loop_rate.sleep();
 	}
@@ -177,14 +265,10 @@ void QNode::run() {
 	Q_EMIT rosShutdown(); // used to signal the gui for a shutdown (useful to roslaunch)
 }
 
-
-void QNode::log(const std::string &msg)
-{
-	Q_EMIT emit_log_message( msg );
-}
-
 void QNode::state_cb(const mavros_msgs::State::ConstPtr &msg)
 {
+	current_state = *msg;
+
 	PX4ConnectionFlag = msg->connected;
 	if(PX4ConnectionFlag) PX4StateTimer = 0.0;
 }
@@ -201,16 +285,28 @@ void QNode::lpe_twist_cb(const geometry_msgs::TwistStamped::ConstPtr &msg)
 	lpeTwistUpdateFlag = true;
 }
 
-void QNode::sp_cb(const mavros_msgs::PositionTarget::ConstPtr &msg)
-{
-	sp = *msg;
-	spUpdateFlag = true;
-}
-
 void QNode::rp_cb(const mavros_msgs::RollPitchTarget::ConstPtr &msg)
 {
 	rp = *msg;
 	rpUpdateFlag = true;
+}
+
+void QNode::initializeSetpoint()
+{
+	sp.coordinate_frame = sp.FRAME_LOCAL_NED;
+	sp.type_mask = sp.IGNORE_AFX | sp.IGNORE_AFY | sp.IGNORE_AFZ;
+
+	// position sp mode
+	sp.position = lpe_pose.pose.position;
+	sp.velocity.x = 0.0;
+	sp.velocity.y = 0.0;
+	sp.velocity.z = 0.0;
+	sp.acceleration_or_force.x = 0.0;
+	sp.acceleration_or_force.y = 0.0;
+	sp.acceleration_or_force.z = 0.0;
+	sp.yaw = -90.0*(3.14/180.0);
+
+	spInitializedFlag = true;
 }
 
 std::vector<double> QNode::subscribeGains(std::vector<std::string> gainNames, bool &successFlag)
