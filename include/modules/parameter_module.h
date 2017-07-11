@@ -29,13 +29,13 @@ class ParameterModule : public Module
 	
 		void log( const std::string );
 		void update_fcu_values( std::vector<std::string>, std::vector<double> );
-		void query_names( std::vector<std::string>& );
-		void query_gcs_values( std::vector<std::string>&, std::vector<double>& );
+		void query_list( std::vector<std::string>&, std::vector<std::string>&, std::vector<double>& );
 
 	private:
 		std::vector<QTableWidget*> widgets;
 		std::vector<QStringList> headers;
 		std::vector<QStringList> names;
+		std::vector<QStringList> types;
 
 		std::string blank;
 };

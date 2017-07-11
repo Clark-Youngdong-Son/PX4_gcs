@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1010</width>
+    <width>1080</width>
     <height>720</height>
    </rect>
   </property>
@@ -761,7 +761,7 @@
    <widget class="QPushButton" name="pushButton_set_gain">
     <property name="geometry">
      <rect>
-      <x>800</x>
+      <x>850</x>
       <y>165</y>
       <width>75</width>
       <height>27</height>
@@ -774,7 +774,7 @@
    <widget class="QPushButton" name="pushButton_get_gain">
     <property name="geometry">
      <rect>
-      <x>800</x>
+      <x>850</x>
       <y>197</y>
       <width>75</width>
       <height>27</height>
@@ -789,7 +789,7 @@
      <rect>
       <x>660</x>
       <y>230</y>
-      <width>321</width>
+      <width>386</width>
       <height>421</height>
      </rect>
     </property>
@@ -817,7 +817,7 @@
        <rect>
         <x>30</x>
         <y>16</y>
-        <width>226</width>
+        <width>291</width>
         <height>387</height>
        </rect>
       </property>
@@ -828,10 +828,10 @@
        <number>20</number>
       </property>
       <attribute name="horizontalHeaderDefaultSectionSize">
-       <number>70</number>
+       <number>85</number>
       </attribute>
       <attribute name="horizontalHeaderMinimumSectionSize">
-       <number>70</number>
+       <number>85</number>
       </attribute>
       <attribute name="verticalHeaderDefaultSectionSize">
        <number>18</number>
@@ -963,7 +963,7 @@
        <rect>
         <x>30</x>
         <y>16</y>
-        <width>226</width>
+        <width>291</width>
         <height>387</height>
        </rect>
       </property>
@@ -974,10 +974,10 @@
        <number>20</number>
       </property>
       <attribute name="horizontalHeaderDefaultSectionSize">
-       <number>70</number>
+       <number>85</number>
       </attribute>
       <attribute name="horizontalHeaderMinimumSectionSize">
-       <number>70</number>
+       <number>85</number>
       </attribute>
       <attribute name="verticalHeaderDefaultSectionSize">
        <number>18</number>
@@ -1109,7 +1109,7 @@
        <rect>
         <x>30</x>
         <y>16</y>
-        <width>226</width>
+        <width>291</width>
         <height>387</height>
        </rect>
       </property>
@@ -1120,10 +1120,10 @@
        <number>20</number>
       </property>
       <attribute name="horizontalHeaderDefaultSectionSize">
-       <number>70</number>
+       <number>85</number>
       </attribute>
       <attribute name="horizontalHeaderMinimumSectionSize">
-       <number>70</number>
+       <number>85</number>
       </attribute>
       <attribute name="verticalHeaderDefaultSectionSize">
        <number>18</number>
@@ -1265,7 +1265,7 @@
      <rect>
       <x>650</x>
       <y>150</y>
-      <width>340</width>
+      <width>410</width>
       <height>21</height>
      </rect>
     </property>
@@ -1276,7 +1276,7 @@
    <widget class="Line" name="line_15">
     <property name="geometry">
      <rect>
-      <x>980</x>
+      <x>1050</x>
       <y>160</y>
       <width>20</width>
       <height>501</height>
@@ -1291,7 +1291,7 @@
      <rect>
       <x>650</x>
       <y>650</y>
-      <width>340</width>
+      <width>410</width>
       <height>21</height>
      </rect>
     </property>
@@ -1322,7 +1322,7 @@
    <widget class="QPushButton" name="pushButton_save_gain">
     <property name="geometry">
      <rect>
-      <x>900</x>
+      <x>950</x>
       <y>166</y>
       <width>75</width>
       <height>27</height>
@@ -1335,7 +1335,7 @@
    <widget class="QPushButton" name="pushButton_load_gain">
     <property name="geometry">
      <rect>
-      <x>900</x>
+      <x>950</x>
       <y>197</y>
       <width>75</width>
       <height>27</height>
@@ -1351,7 +1351,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1010</width>
+     <width>1080</width>
      <height>25</height>
     </rect>
    </property>

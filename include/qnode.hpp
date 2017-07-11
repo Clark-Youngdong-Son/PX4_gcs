@@ -36,8 +36,10 @@ public:
 
 	//MAVROS
 	bool connect_px4();
-	std::vector<double> subscribeGains(std::vector<std::string>, bool &);
-	bool publishGains(std::vector<std::string>, std::vector<double>);
+	bool subscribeGains(const std::vector<std::string>, const std::vector<std::string>, 
+						std::vector<double>& );
+	bool publishGains(const std::vector<std::string>, const std::vector<std::string>,
+						const std::vector<double>);
 
 	// Keyboard interaction
 	void setArm(); 
@@ -94,7 +96,6 @@ private:
 	ros::ServiceClient set_gain_client;		// set gain with GCS value
 	ros::ServiceClient arming_client;		// arm/disarm
 	ros::ServiceClient set_mode_client;
-	mavros_msgs::ParamGet paramget_srv;
 	mavros_msgs::ParamSet paramset_srv;
 	mavros_msgs::CommandBool arm_cmd;
 
@@ -107,8 +108,10 @@ private:
 	bool spInitializedFlag;
 
 	void initializeSetpoint();
-	double getGain(std::string);
+	bool getGain(std::string, double&);
+	bool getGain(std::string, int&);
 	bool setGain(std::string, double);
+	bool setGain(std::string, int);
 };
 
 void q2e(const double, const double, const double, const double, double&, double&, double&);

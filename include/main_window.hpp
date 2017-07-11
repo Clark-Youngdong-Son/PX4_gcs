@@ -4,7 +4,7 @@
 #define QCUSTOMPLOT_USE_LIBRARY
 
 #include <QtGui/QMainWindow>
-#include "ui_icsl_gcs3.h"
+#include "ui_icsl_gcs4.h"
 #include "qnode.hpp"
 
 #include "modules/drawing_module.h"

@@ -309,43 +309,84 @@ void QNode::initializeSetpoint()
 	spInitializedFlag = true;
 }
 
-std::vector<double> QNode::subscribeGains(std::vector<std::string> gainNames, bool &successFlag)
+bool QNode::subscribeGains(const std::vector<std::string> gainNames, 
+						   const std::vector<std::string> gainTypes,
+						   std::vector<double>& gainValues)
 {
+	gainValues.clear();
+
 	if(initializationFlag)
 	{
-		successFlag = true;
-		
-		std::vector<double> _values;
-
 		for(unsigned int i=0; i<gainNames.size(); i++)
 		{
-			double gain = getGain(gainNames[i]);
-			if(gain==99.0f) successFlag = false;
-				_values.push_back( gain );
+			if( strcmp( gainTypes[i].c_str(), "double" ) ) // integer type
+			{
+				int _value;
+				if( getGain(gainNames[i], _value) ) 
+				{
+					gainValues.push_back( (double)_value );
+				}
+			}
+			else // double type
+			{
+				double _value;
+				if( getGain(gainNames[i], _value) ) 
+				{
+					gainValues.push_back( _value );
+				}
+
+			}
 		}
 
-		if(successFlag) log("Gain get finished");
-		else log("Gain get failed");
-		return _values;
+		if( gainValues.size() == gainNames.size() ) 
+		{
+			log("Gain get finished");
+			return true;
+		}
+		else
+		{
+			log("Gain get failed");
+			return false;
+		}
 	}
 	else
 	{
 		log("Connect both ROS and PX4 first");
-		successFlag = false;
-		std::vector<double> empty;
-		return empty;
+		return false;
 	}
 }
 
-double QNode::getGain(std::string gainName)
+bool QNode::getGain(std::string gainName, double& value)
 {
-	paramget_srv.request.param_id = gainName;
-	get_gain_client.call(paramget_srv);
-	if(paramget_srv.response.success) return (double)paramget_srv.response.value.real;
-	else return 99.0;
+	mavros_msgs::ParamGet param; 
+	param.request.param_id = gainName;
+	get_gain_client.call( param );
+	if(param.response.success)
+	{
+		value = (double)param.response.value.real;
+		return true;
+	}
+	else
+		return false;
 } 
 
-bool QNode::publishGains(std::vector<std::string> gainNames, std::vector<double> gainValues)
+bool QNode::getGain(std::string gainName, int& value)
+{
+	mavros_msgs::ParamGet param; 
+	param.request.param_id = gainName;
+	get_gain_client.call( param );
+	if(param.response.success)
+	{
+		value = (int)param.response.value.integer;
+		return true;
+	}
+	else
+		return false;
+} 
+
+bool QNode::publishGains(const std::vector<std::string> gainNames, 
+						const std::vector<std::string> gainTypes,
+						const std::vector<double> gainValues)
 {
 	if(initializationFlag)
 	{
@@ -353,7 +394,10 @@ bool QNode::publishGains(std::vector<std::string> gainNames, std::vector<double>
 		
 		for(unsigned int i=0; i<gainNames.size(); i++)
 		{
-			successFlag &= setGain(gainNames[i],gainValues[i]);
+			if( strcmp(gainTypes[i].c_str(), "double") ) // integer
+				successFlag &= setGain(gainNames[i], (int)gainValues[i]);
+			else
+				successFlag &= setGain(gainNames[i], gainValues[i]);
 		}
 
 		if(successFlag)
@@ -372,11 +416,26 @@ bool QNode::publishGains(std::vector<std::string> gainNames, std::vector<double>
 
 bool QNode::setGain(std::string gainName, double gainValue)
 {
-	paramset_srv.request.param_id 		= gainName;
-	paramset_srv.request.value.real 	= (float)gainValue;
-	set_gain_client.call(paramset_srv);
-	if(paramset_srv.response.success) return true;
-	else return false;
+	mavros_msgs::ParamSet param;
+	param.request.param_id 		= gainName;
+	param.request.value.real 	= (float)gainValue;
+	set_gain_client.call( param );
+	if(param.response.success) 
+		return true;
+	else 
+		return false;
+}
+
+bool QNode::setGain(std::string gainName, int gainValue)
+{
+	mavros_msgs::ParamSet param;
+	param.request.param_id 		= gainName;
+	param.request.value.integer = gainValue;
+	set_gain_client.call( param );
+	if(param.response.success) 
+		return true;
+	else 
+		return false;
 }
 
 void q2e(const double q0, const double q1, const double q2, const double q3, 

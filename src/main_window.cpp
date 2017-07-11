@@ -142,16 +142,16 @@ void ICSL_GCS::set_rp_target_data(double r_t, double p_t, double t)
 void ICSL_GCS::on_pushButton_set_gain_clicked()
 {
 	std::vector<std::string> gainNames;
+	std::vector<std::string> gainTypes;
 	std::vector<double> gcsValues;
-	param->query_gcs_values( gainNames, gcsValues );
+	param->query_list( gainNames, gainTypes, gcsValues );
 	
-	bool successFlag = false;
-	successFlag = qnode.publishGains(gainNames, gcsValues);
+	bool successFlag = qnode.publishGains(gainNames, gainTypes, gcsValues);
 	if(successFlag)
 	{
 		// again, we have to subscribe fcu values in order to confirm.
-		bool assurance = false;
-		std::vector<double> fcuValues = qnode.subscribeGains(gainNames, assurance);
+		std::vector<double> fcuValues;
+		bool assurance = qnode.subscribeGains(gainNames, gainTypes, fcuValues);
 
 		if( assurance )
 			param->update_fcu_values( gainNames, fcuValues );
@@ -164,10 +164,13 @@ void ICSL_GCS::on_pushButton_set_gain_clicked()
 void ICSL_GCS::on_pushButton_get_gain_clicked()
 {
 	std::vector<std::string> gainNames;
-	param->query_names( gainNames );
+	std::vector<std::string> gainTypes;
+	std::vector<double> tmp;
 
-	bool successFlag = false;
-	std::vector<double> gainValues = qnode.subscribeGains( gainNames, successFlag );
+	param->query_list( gainNames, gainTypes, tmp );
+
+	std::vector<double> gainValues;	
+	bool successFlag = qnode.subscribeGains( gainNames, gainTypes, gainValues );
 
 	if( successFlag )
 		param->update_fcu_values( gainNames, gainValues );
