@@ -65,6 +65,10 @@ Q_SIGNALS:
 	void emit_lpe_angular_velocity_data(double,double,double,double);
 	void emit_sp_position_data(double,double,double,double);
 	void emit_rp_target_data(double,double,double);
+	void emit_mocap_position_data(double,double,double,double);
+	void emit_mocap_linear_velocity_data(double,double,double,double);
+	void emit_mocap_attitude_data(double,double,double,double);
+	void emit_mocap_angular_velocity_data(double,double,double,double);
 	void emit_arming_state(bool);
 	void emit_flight_mode( const char* );
 
@@ -81,18 +85,30 @@ private:
 	ros::Subscriber	lpe_pose_subscriber; 	// LPE state (6dof pose)
 	ros::Subscriber	lpe_twist_subscriber; 	// LPE state (6dof twist)
 	ros::Subscriber rp_subscriber;			// desired roll/pitch angles
+	ros::Subscriber mocap_pos_subscriber;	// vicon position
+	ros::Subscriber mocap_vel_subscriber;	// vicon velocity
 	void state_cb(const mavros_msgs::State::ConstPtr &);
 	void lpe_pose_cb(const geometry_msgs::PoseStamped::ConstPtr &);
 	void lpe_twist_cb(const geometry_msgs::TwistStamped::ConstPtr &);
 	void rp_cb(const mavros_msgs::RollPitchTarget::ConstPtr &);
+	void mocap_pos_cb(const geometry_msgs::PoseStamped::ConstPtr &);
+	void mocap_vel_cb(const geometry_msgs::TwistStamped::ConstPtr &);
 	mavros_msgs::State current_state;
 	geometry_msgs::PoseStamped lpe_pose;
 	geometry_msgs::TwistStamped lpe_twist;
 	mavros_msgs::RollPitchTarget rp;
+	geometry_msgs::PoseStamped mocap_pos;
+	geometry_msgs::TwistStamped mocap_vel;
+	bool lpePoseUpdateFlag;
+	bool lpeTwistUpdateFlag;
+	bool rpUpdateFlag;
+	bool mocapPosUpdateFlag;
+	bool mocapVelUpdateFlag;
 
 	/** publisher **/
 	ros::Publisher sp_publisher;			// setpoint raw
 	mavros_msgs::PositionTarget sp;
+	bool spInitializedFlag;
 	
 	/** service client **/
 	ros::ServiceClient get_gain_client;		// get gain of FCU
@@ -106,9 +122,6 @@ private:
 	bool ROSConnectionFlag, ROSDisconnectionFlag;
 	bool PX4ConnectionFlag, PX4DisconnectionFlag;
 	double PX4StateTimer;
-
-	bool lpePoseUpdateFlag, lpeTwistUpdateFlag, rpUpdateFlag;
-	bool spInitializedFlag;
 
 	void initializeSetpoint();
 	bool getGain(std::string, double&);

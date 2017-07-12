@@ -35,6 +35,13 @@ ICSL_GCS::ICSL_GCS(int argc, char** argv, QWidget *parent)
 					this, SLOT(set_lpe_attitude_data(double,double,double,double))); 
 	QObject::connect(&qnode, SIGNAL(emit_lpe_angular_velocity_data(double,double,double,double)), 
 					this, SLOT(set_lpe_angular_velocity_data(double,double,double,double))); 
+	QObject::connect(&qnode, SIGNAL(emit_mocap_position_data(double,double,double,double)), 
+					this, SLOT(set_mocap_position_data(double,double,double,double))); 
+	QObject::connect(&qnode, SIGNAL(emit_mocap_linear_velocity_data(double,double,double,double)), 
+					this, SLOT(set_mocap_linear_velocity_data(double,double,double,double))); 
+	QObject::connect(&qnode, SIGNAL(emit_mocap_attitude_data(double,double,double,double)), 
+					this, SLOT(set_mocap_attitude_data(double,double,double,double))); 
+	QObject::connect(&qnode, SIGNAL(emit_mocap_angular_velocity_data(double,double,double,double)), 				   this, SLOT(set_mocap_angular_velocity_data(double,double,double,double))); 
 	QObject::connect(&qnode, SIGNAL(emit_sp_position_data(double,double,double,double)), 
 					this, SLOT(set_sp_position_data(double,double,double,double))); 
 	QObject::connect(&qnode, SIGNAL(emit_rp_target_data(double,double,double)), 
@@ -113,12 +120,39 @@ void ICSL_GCS::set_lpe_angular_velocity_data(double p, double q, double r, doubl
 	graph[10]->draw(t, q, 0);
 	graph[11]->draw(t, r, 0);
 }
+
+void ICSL_GCS::set_mocap_position_data(double x, double y, double z, double t)
+{
+	graph[0]->draw(t, x, 2);
+	graph[1]->draw(t, y, 2);
+	graph[2]->draw(t, z, 2);
+}
+void ICSL_GCS::set_mocap_linear_velocity_data(double vx, double vy, double vz, double t)
+{
+	graph[3]->draw(t, vx, 2);
+	graph[4]->draw(t, vy, 2);
+	graph[5]->draw(t, vz, 2);
+}
+void ICSL_GCS::set_mocap_attitude_data(double roll, double pitch, double yaw, double t)
+{
+	graph[6]->draw(t, roll, 2);
+	graph[7]->draw(t, pitch, 2);
+	graph[8]->draw(t, yaw, 2);
+}
+void ICSL_GCS::set_mocap_angular_velocity_data(double p, double q, double r, double t)
+{
+	graph[9]->draw(t, p, 2);
+	graph[10]->draw(t, q, 2);
+	graph[11]->draw(t, r, 2);
+}
+
 void ICSL_GCS::set_sp_position_data(double x, double y, double z, double t)
 {
 	graph[0]->draw(t, x, 1);
 	graph[1]->draw(t, y, 1);
 	graph[2]->draw(t, z, 1);
 }
+
 void ICSL_GCS::set_rp_target_data(double r_t, double p_t, double t)
 {
 	graph[6]->draw(t, r_t, 1);
@@ -266,52 +300,52 @@ void ICSL_GCS::setupGraph()
 {
 	// graph settings, it would be more desirable if we can set these params at runtime
 	graph[0] = new DrawingModule( ui.widget_p_x );
-	graph[0]->setMargin(1.0);
-	graph[0]->setYLims(-4.0, 4.0);
+	graph[0]->setMargin(0.2);
+	graph[0]->setYLims(-1.0, 1.0);
 
 	graph[1] = new DrawingModule( ui.widget_p_y );
-	graph[1]->setMargin(1.0);
-	graph[1]->setYLims(-4.0, 4.0);
+	graph[1]->setMargin(0.2);
+	graph[1]->setYLims(-1.0, 1.0);
 
 	graph[2] = new DrawingModule( ui.widget_p_z );
-	graph[2]->setMargin(1.0);
-	graph[2]->setYLims(-1.0, 7.0);
+	graph[2]->setMargin(0.2);
+	graph[2]->setYLims(-1.0, 1.0);
 
 	graph[3] = new DrawingModule( ui.widget_v_x );
-	graph[3]->setMargin(0.5);
-	graph[3]->setYLims(-3.0, 3.0);
+	graph[3]->setMargin(0.2);
+	graph[3]->setYLims(-1.0, 1.0);
 	
 	graph[4] = new DrawingModule( ui.widget_v_y );
-	graph[4]->setMargin(0.5);
-	graph[4]->setYLims(-3.0, 3.0);
+	graph[4]->setMargin(0.2);
+	graph[4]->setYLims(-1.0, 1.0);
 	
 	graph[5] = new DrawingModule( ui.widget_v_z );
-	graph[5]->setMargin(0.5);
-	graph[5]->setYLims(-3.0, 3.0);
+	graph[5]->setMargin(0.2);
+	graph[5]->setYLims(-1.0, 1.0);
 	
 	graph[6] = new DrawingModule( ui.widget_roll );
-	graph[6]->setMargin(10.0);
-	graph[6]->setYLims(-30.0, 30.0);
+	graph[6]->setMargin(2.0);
+	graph[6]->setYLims(-10.0, 10.0);
 	
 	graph[7] = new DrawingModule( ui.widget_pitch );
-	graph[7]->setMargin(10.0);
-	graph[7]->setYLims(-30.0, 30.0);
+	graph[7]->setMargin(2.0);
+	graph[7]->setYLims(-10.0, 10.0);
 	
 	graph[8] = new DrawingModule( ui.widget_yaw );
-	graph[8]->setMargin(10.0);
-	graph[8]->setYLims(-30.0, 30.0);
+	graph[8]->setMargin(2.0);
+	graph[8]->setYLims(-10.0, 10.0);
 	
 	graph[9] = new DrawingModule( ui.widget_p );
-	graph[9]->setMargin(10.0);
-	graph[9]->setYLims(-60.0, 60.0);
+	graph[9]->setMargin(6.0);
+	graph[9]->setYLims(-30.0, 30.0);
 	
 	graph[10] = new DrawingModule( ui.widget_q );
-	graph[10]->setMargin(10.0);
-	graph[10]->setYLims(-60.0, 60.0);
+	graph[10]->setMargin(6.0);
+	graph[10]->setYLims(-30.0, 30.0);
 	
 	graph[11] = new DrawingModule( ui.widget_r );
-	graph[11]->setMargin(10.0);
-	graph[11]->setYLims(-60.0, 60.0);
+	graph[11]->setMargin(6.0);
+	graph[11]->setYLims(-30.0, 30.0);
 }
 
 

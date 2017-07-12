@@ -803,7 +803,7 @@
      <enum>QTabWidget::West</enum>
     </property>
     <property name="currentIndex">
-     <number>2</number>
+     <number>0</number>
     </property>
     <property name="elideMode">
      <enum>Qt::ElideNone</enum>
@@ -825,7 +825,7 @@
        <number>10</number>
       </property>
       <property name="rowCount">
-       <number>1</number>
+       <number>0</number>
       </property>
       <attribute name="horizontalHeaderDefaultSectionSize">
        <number>85</number>
@@ -842,11 +842,6 @@
       <attribute name="verticalHeaderStretchLastSection">
        <bool>false</bool>
       </attribute>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
       <column>
        <property name="text">
         <string>FCU</string>
@@ -876,7 +871,7 @@
        <number>10</number>
       </property>
       <property name="rowCount">
-       <number>1</number>
+       <number>0</number>
       </property>
       <attribute name="horizontalHeaderDefaultSectionSize">
        <number>85</number>
@@ -893,11 +888,6 @@
       <attribute name="verticalHeaderStretchLastSection">
        <bool>false</bool>
       </attribute>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
       <column>
        <property name="text">
         <string>FCU</string>
@@ -927,7 +917,7 @@
        <number>10</number>
       </property>
       <property name="rowCount">
-       <number>1</number>
+       <number>0</number>
       </property>
       <attribute name="horizontalHeaderDefaultSectionSize">
        <number>85</number>
@@ -944,11 +934,6 @@
       <attribute name="verticalHeaderStretchLastSection">
        <bool>false</bool>
       </attribute>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
       <column>
        <property name="text">
         <string>FCU</string>

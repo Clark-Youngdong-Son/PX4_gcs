@@ -10,7 +10,11 @@ QNode::QNode(int argc, char** argv ) :
 	PX4DisconnectionFlag(false), ROSDisconnectionFlag(false),
 	initializationFlag(false),
 	PX4StateTimer(0.0),
-	lpePoseUpdateFlag(false),lpeTwistUpdateFlag(false),rpUpdateFlag(false),
+	lpePoseUpdateFlag(false),
+	lpeTwistUpdateFlag(false),
+	rpUpdateFlag(false),
+	mocapPosUpdateFlag(false),
+	mocapVelUpdateFlag(false),
 	spInitializedFlag(false)
 	{}
 
@@ -53,7 +57,11 @@ bool QNode::init()
 			("mavros/local_position/velocity", 1, &QNode::lpe_twist_cb, this);
 		rp_subscriber = n.subscribe<mavros_msgs::RollPitchTarget>
 			("mavros/rp_target", 1, &QNode::rp_cb, this);
-
+		mocap_pos_subscriber = n.subscribe<geometry_msgs::PoseStamped>
+			("mavros/mocap/pose", 1, &QNode::mocap_pos_cb, this);
+		mocap_vel_subscriber = n.subscribe<geometry_msgs::TwistStamped>
+			("mavros/mocap/twist", 1, &QNode::mocap_vel_cb, this);
+		
 		// Publication
 		sp_publisher = n.advertise<mavros_msgs::PositionTarget>
 			("mavros/setpoint_raw/local", 1);
@@ -229,7 +237,7 @@ void QNode::run()
 				double roll, pitch, yaw;
 				q2e( lpe_pose.pose.orientation, roll, pitch, yaw);
 
-				double t = (lpe_pose.header.stamp - t_init).toSec();
+				double t = (ros::Time::now() - t_init).toSec();
 
 				Q_EMIT emit_lpe_position_data(x,y,z,t);
 				Q_EMIT emit_lpe_attitude_data(roll,pitch,yaw,t);
@@ -244,7 +252,7 @@ void QNode::run()
 				double q = 180.0/3.14*lpe_twist.twist.angular.y;
 				double r = 180.0/3.14*lpe_twist.twist.angular.z;
 				
-				double t = (lpe_twist.header.stamp - t_init).toSec();
+				double t = (ros::Time::now() - t_init).toSec();
 
 				Q_EMIT emit_lpe_linear_velocity_data(vx,vy,vz,t);
 				Q_EMIT emit_lpe_angular_velocity_data(p,q,r,t);
@@ -255,10 +263,41 @@ void QNode::run()
 				double r_target = (180.0/3.14)*rp.roll_target;
 				double p_target = -(180.0/3.14)*rp.pitch_target; //// coordination problem..
 
-				double t = (rp.header.stamp - t_init).toSec();
+				double t = (ros::Time::now() - t_init).toSec();
 
 				Q_EMIT emit_rp_target_data(r_target, p_target, t);
 			}
+			if(mocapPosUpdateFlag)
+			{
+				double x = mocap_pos.pose.position.x;
+				double y = mocap_pos.pose.position.y;
+				double z = mocap_pos.pose.position.z;
+				double roll, pitch, yaw;
+				q2e( mocap_pos.pose.orientation, roll, pitch, yaw);
+
+				double t = (ros::Time::now() - t_init).toSec();
+
+				Q_EMIT emit_mocap_position_data(x,y,z,t);
+				//Q_EMIT emit_mocap_attitude_data(roll,pitch,yaw,t);
+				mocapPosUpdateFlag = false;
+			}
+			if(mocapVelUpdateFlag)
+			{
+				double vx = mocap_vel.twist.linear.x;
+				double vy = mocap_vel.twist.linear.y;
+				double vz = mocap_vel.twist.linear.z;
+				double p = 180.0/3.14*mocap_vel.twist.angular.x;
+				double q = 180.0/3.14*mocap_vel.twist.angular.y;
+				double r = 180.0/3.14*mocap_vel.twist.angular.z;
+				
+				double t = (ros::Time::now() - t_init).toSec();
+
+				Q_EMIT emit_mocap_linear_velocity_data(vx,vy,vz,t);
+				//Q_EMIT emit_mocap_angular_velocity_data(p,q,r,t);
+				mocapVelUpdateFlag = false;
+			}
+
+
 			if(spInitializedFlag)
 			{
 				sp.header.stamp = ros::Time::now();
@@ -314,6 +353,18 @@ void QNode::rp_cb(const mavros_msgs::RollPitchTarget::ConstPtr &msg)
 	rpUpdateFlag = true;
 }
 
+void QNode::mocap_pos_cb(const geometry_msgs::PoseStamped::ConstPtr &msg)
+{
+	mocap_pos = *msg;
+	mocapPosUpdateFlag = true;
+}
+
+void QNode::mocap_vel_cb(const geometry_msgs::TwistStamped::ConstPtr &msg)
+{
+	mocap_vel = *msg;
+	mocapVelUpdateFlag = true;
+}
+
 void QNode::initializeSetpoint()
 {
 	sp.coordinate_frame = sp.FRAME_LOCAL_NED;
@@ -328,6 +379,7 @@ void QNode::initializeSetpoint()
 	sp.acceleration_or_force.y = 0.0;
 	sp.acceleration_or_force.z = 0.0;
 	sp.yaw = -90.0*(3.14/180.0);
+	//sp.yaw = 0.0;
 
 	spInitializedFlag = true;
 }

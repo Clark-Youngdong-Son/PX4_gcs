@@ -23,6 +23,10 @@ ParameterModule::~ParameterModule()
 
 void ParameterModule::load( string filename )
 {
+	headers.clear();
+	names.clear();
+	types.clear();
+
 	xmlDoc* doc = xmlParseFile( filename.c_str() );
 	xmlNode* top = xmlDocGetRootElement( doc );
 	xmlNode* cur = top->xmlChildrenNode->next;
@@ -31,7 +35,8 @@ void ParameterModule::load( string filename )
 	while( cur != NULL )
 	{
 		xmlNode* child = cur->xmlChildrenNode->next;	
-		
+		widgets[i]->setRowCount( 0 );
+
 		QStringList _header;
 		QStringList _name;
 		QStringList _type;
@@ -42,6 +47,9 @@ void ParameterModule::load( string filename )
 			// name of node
 			_name << (const char*)child->name;
 			
+			//if( j+1 > widgets[i]->rowCount() )
+			widgets[i]->insertRow( widgets[i]->rowCount() );
+
 			// type
 			xmlNode* sub = child->xmlChildrenNode->next;
 			_type << (const char*)xmlNodeGetContent(sub);
@@ -70,7 +78,6 @@ void ParameterModule::load( string filename )
 			child = child->next->next;
 			j++;
 		}
-		widgets[i]->setRowCount( _header.length() );
 		widgets[i]->setVerticalHeaderLabels( _header );
 		names.push_back( _name );
 		headers.push_back( _header );
@@ -98,14 +105,18 @@ void ParameterModule::save( string filename )
 		for(unsigned int j=0; j<names[i].length(); j++)
 		{
 			xmlNode* _name = xmlNewNode(NULL, (xmlChar*)names[i][j].toStdString().c_str());
+			xmlNode* _type = xmlNewNode(NULL, (xmlChar*)"type");
 			xmlNode* _description = xmlNewNode(NULL, (xmlChar*)"description");
 			xmlNode* _value = xmlNewNode(NULL, (xmlChar*)"value");
+			
 			
 			ostringstream value_ss;
 			value_ss << widgets[i]->item(j,1)->text().toStdString();
 			xmlNodeSetContent(_description, (xmlChar*)headers[i][j].toStdString().c_str());
 			xmlNodeSetContent(_value, (xmlChar*)value_ss.str().c_str());
+			xmlNodeSetContent(_type, (xmlChar*)types[i][j].toStdString().c_str());
 
+			xmlAddChild( _name, _type );
 			xmlAddChild( _name, _description );
 			xmlAddChild( _name, _value );
 			xmlAddChild( _tbl, _name );

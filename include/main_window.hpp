@@ -32,6 +32,10 @@ class ICSL_GCS : public QMainWindow
 		void set_lpe_linear_velocity_data(double,double,double,double);
 		void set_lpe_attitude_data(double,double,double,double);
 		void set_lpe_angular_velocity_data(double,double,double,double);
+		void set_mocap_position_data(double,double,double,double);
+		void set_mocap_linear_velocity_data(double,double,double,double);
+		void set_mocap_attitude_data(double,double,double,double);
+		void set_mocap_angular_velocity_data(double,double,double,double);
 		void set_sp_position_data(double,double,double,double);
 		void set_rp_target_data(double,double,double);
 		void set_arming_state(bool);
