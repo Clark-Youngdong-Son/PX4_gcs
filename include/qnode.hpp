@@ -13,12 +13,14 @@
 #include <mavros_msgs/RollPitchTarget.h>
 #include <mavros_msgs/CommandBool.h>
 #include <mavros_msgs/SetMode.h>
-
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/Quaternion.h>
+#include <sensor_msgs/NavSatFix.h>
+#include <nav_msgs/Odometry.h>
 #include <std_msgs/String.h>
 #include <std_msgs/Bool.h>
+#include <std_msgs/Float64.h>
 
 #define PX4_LOSS_TIME 2.0
 
@@ -71,39 +73,65 @@ Q_SIGNALS:
 	void emit_mocap_angular_velocity_data(double,double,double,double);
 	void emit_arming_state(bool);
 	void emit_flight_mode( const char* );
+	void emit_gps_local(double,double,double,double,double,double,double);
+	void emit_gps_global(double,double,double,int,int,double);
+	void emit_gps_comp_hdg(double,double);
+	void emit_gps_rel_alt(double,double);
+	void emit_gps_raw_vel(double,double,double,double);
 
 private:
 	int init_argc;
 	char** init_argv;
 	void log(const std::string &msg){ Q_EMIT emit_log_message( msg ); }
+	double now(){ return (ros::Time::now() - t_init).toSec(); }
 
 	//MAVROS
 	ros::Time t_init;
 	
 	/** subscriber and callbacks **/
-	ros::Subscriber state_subscriber; 		// connection status
-	ros::Subscriber	lpe_pose_subscriber; 	// LPE state (6dof pose)
-	ros::Subscriber	lpe_twist_subscriber; 	// LPE state (6dof twist)
-	ros::Subscriber rp_subscriber;			// desired roll/pitch angles
-	ros::Subscriber mocap_pos_subscriber;	// vicon position
-	ros::Subscriber mocap_vel_subscriber;	// vicon velocity
+	ros::Subscriber state_subscriber; 			// connection status
+	ros::Subscriber	lpe_pose_subscriber; 		// LPE state (6dof pose)
+	ros::Subscriber	lpe_twist_subscriber; 		// LPE state (6dof twist)
+	ros::Subscriber rp_subscriber;				// desired roll/pitch angles
+	ros::Subscriber mocap_pos_subscriber;		// vicon position
+	ros::Subscriber mocap_vel_subscriber;		// vicon velocity
+	ros::Subscriber gps_local_subscriber;		// gps in local coordinate
+	ros::Subscriber gps_global_subscriber;		// gps global (lat, lon, alt)
+	ros::Subscriber gps_comp_hdg_subscriber;	// compass heading
+	ros::Subscriber gps_rel_alt_subscriber; 	// relative altitude
+	ros::Subscriber gps_raw_vel_subscriber; 	// gps raw velocity
 	void state_cb(const mavros_msgs::State::ConstPtr &);
 	void lpe_pose_cb(const geometry_msgs::PoseStamped::ConstPtr &);
 	void lpe_twist_cb(const geometry_msgs::TwistStamped::ConstPtr &);
 	void rp_cb(const mavros_msgs::RollPitchTarget::ConstPtr &);
 	void mocap_pos_cb(const geometry_msgs::PoseStamped::ConstPtr &);
 	void mocap_vel_cb(const geometry_msgs::TwistStamped::ConstPtr &);
+	void gps_local_cb(const nav_msgs::Odometry::ConstPtr &);
+	void gps_global_cb(const sensor_msgs::NavSatFix::ConstPtr &);
+	void gps_comp_hdg_cb(const std_msgs::Float64::ConstPtr &);
+	void gps_rel_alt_cb(const std_msgs::Float64::ConstPtr &);
+	void gps_raw_vel_cb(const geometry_msgs::TwistStamped::ConstPtr &);
 	mavros_msgs::State current_state;
 	geometry_msgs::PoseStamped lpe_pose;
 	geometry_msgs::TwistStamped lpe_twist;
 	mavros_msgs::RollPitchTarget rp;
 	geometry_msgs::PoseStamped mocap_pos;
 	geometry_msgs::TwistStamped mocap_vel;
+	nav_msgs::Odometry gps_local;
+	sensor_msgs::NavSatFix gps_global;
+	std_msgs::Float64 gps_comp_hdg;
+	std_msgs::Float64 gps_rel_alt;
+	geometry_msgs::TwistStamped gps_raw_vel;
 	bool lpePoseUpdateFlag;
 	bool lpeTwistUpdateFlag;
 	bool rpUpdateFlag;
 	bool mocapPosUpdateFlag;
 	bool mocapVelUpdateFlag;
+	bool gpsLocalUpdateFlag;
+	bool gpsGlobalUpdateFlag;
+	bool gpsCompHdgUpdateFlag;
+	bool gpsRelAltUpdateFlag;
+	bool gpsRawVelUpdateFlag;
 
 	/** publisher **/
 	ros::Publisher sp_publisher;			// setpoint raw

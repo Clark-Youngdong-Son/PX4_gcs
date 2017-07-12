@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.0)
 project(px4_gcs)
 
-find_package(catkin REQUIRED COMPONENTS qt_build roscpp mavros_msgs geometry_msgs)
+find_package(catkin REQUIRED COMPONENTS qt_build roscpp mavros_msgs geometry_msgs sensor_msgs nav_msgs)
 find_package(LibXml2 REQUIRED)
 include_directories( include ${catkin_INCLUDE_DIRS} ${LIBXML2_INCLUDE_DIR})
 catkin_package()

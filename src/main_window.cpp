@@ -51,6 +51,15 @@ ICSL_GCS::ICSL_GCS(int argc, char** argv, QWidget *parent)
 					this, SLOT(set_arming_state(bool)));
 	QObject::connect(&qnode, SIGNAL(emit_flight_mode(const char*)), 
 					this, SLOT(set_flight_mode(const char*)));
+	QObject::connect(&qnode, SIGNAL(emit_gps_local(double,double,double,double,double,double,double)), this, SLOT(set_gps_local(double,double,double,double,double,double,double)));
+	QObject::connect(&qnode, SIGNAL(emit_gps_global(double,double,double,int,int,double)), 
+			this, SLOT(set_gps_global(double,double,double,int,int,double)));
+	QObject::connect(&qnode, SIGNAL(emit_gps_comp_hdg(double,double)), 
+			this, SLOT(set_gps_comp_hdg(double,double)));
+	QObject::connect(&qnode, SIGNAL(emit_gps_rel_alt(double,double)), 
+			this, SLOT(set_gps_rel_alt(double,double)));
+	QObject::connect(&qnode, SIGNAL(emit_gps_raw_vel(double,double,double,double)), 
+			this, SLOT(set_gps_raw_vel(double,double,double,double)));
 
 	logger = new LoggingModule( ui.view_logging );
 	
@@ -185,6 +194,42 @@ void ICSL_GCS::set_flight_mode(const char* mode)
 		ui.pushButton_flight_mode->setText( QString("Manual") );
 		ui.pushButton_flight_mode->setStyleSheet("background-color: rgba(0,255,0,128);");
 	}
+}
+
+void ICSL_GCS::set_gps_local(double x,double y,double z,double vx,double vy,double vz,double t)
+{
+	graph[12]->draw(t,x,0);
+	graph[13]->draw(t,y,0);
+	graph[14]->draw(t,z,0);
+	graph[15]->draw(t,vx,0);
+	graph[16]->draw(t,vy,0);
+	graph[17]->draw(t,vz,0);
+}
+
+void ICSL_GCS::set_gps_global(double lat, double lon, double alt, int fix, int service, double t)
+{
+	graph[18]->draw(t,lat,0);
+	graph[19]->draw(t,lon,0);
+	graph[20]->draw(t,alt,0);
+	graph[23]->draw(t,(double)fix,0);
+	graph[24]->draw(t,(double)service,0);
+}
+
+void ICSL_GCS::set_gps_comp_hdg(double val, double t)
+{
+	graph[22]->draw(t,val,0);
+}
+
+void ICSL_GCS::set_gps_rel_alt(double val, double t)
+{
+	graph[21]->draw(t,val,0);
+}
+
+void ICSL_GCS::set_gps_raw_vel(double vx, double vy, double vz, double t)
+{
+	graph[15]->draw(t,vx,1);
+	graph[16]->draw(t,vy,1);
+	graph[17]->draw(t,vz,1);
 }
 
 void ICSL_GCS::on_pushButton_connect_ros_clicked()
@@ -346,6 +391,58 @@ void ICSL_GCS::setupGraph()
 	graph[11] = new DrawingModule( ui.widget_r );
 	graph[11]->setMargin(6.0);
 	graph[11]->setYLims(-30.0, 30.0);
+
+	graph[12] = new DrawingModule( ui.widget_gps_local_x );
+	graph[12]->setMargin(0.4);
+	graph[12]->setYLims(-2.0, 2.0);
+	
+	graph[13] = new DrawingModule( ui.widget_gps_local_y );
+	graph[13]->setMargin(0.4);
+	graph[13]->setYLims(-2.0, 2.0);
+	
+	graph[14] = new DrawingModule( ui.widget_gps_local_z );
+	graph[14]->setMargin(0.4);
+	graph[14]->setYLims(-2.0, 2.0);
+	
+	graph[15] = new DrawingModule( ui.widget_gps_local_vx );
+	graph[15]->setMargin(0.8);
+	graph[15]->setYLims(-4.0, 4.0);
+	
+	graph[16] = new DrawingModule( ui.widget_gps_local_vy );
+	graph[16]->setMargin(0.8);
+	graph[16]->setYLims(-4.0, 4.0);
+	
+	graph[17] = new DrawingModule( ui.widget_gps_local_vz );
+	graph[17]->setMargin(0.8);
+	graph[17]->setYLims(-4.0, 4.0);
+	
+	graph[18] = new DrawingModule( ui.widget_gps_lat );
+	graph[18]->setMargin(0.2);
+	graph[18]->setYLims(-1.0, 1.0);
+	
+	graph[19] = new DrawingModule( ui.widget_gps_lon );
+	graph[19]->setMargin(0.2);
+	graph[19]->setYLims(-1.0, 1.0);
+	
+	graph[20] = new DrawingModule( ui.widget_gps_alt );
+	graph[20]->setMargin(0.6);
+	graph[20]->setYLims(-3.0, 3.0);
+	
+	graph[21] = new DrawingModule( ui.widget_gps_rel_alt );
+	graph[21]->setMargin(0.6);
+	graph[21]->setYLims(-3.0, 3.0);
+	
+	graph[22] = new DrawingModule( ui.widget_gps_comp_hdg );
+	graph[22]->setMargin(2.0);
+	graph[22]->setYLims(-10.0, 10.0);
+	
+	graph[23] = new DrawingModule( ui.widget_gps_fix );
+	graph[23]->setMargin(0.2);
+	graph[23]->setYLims(-1.0, 1.0);
+	
+	graph[24] = new DrawingModule( ui.widget_gps_service );
+	graph[24]->setMargin(0.2);
+	graph[24]->setYLims(-1.0, 1.0);
 }
 
 

@@ -15,6 +15,11 @@ QNode::QNode(int argc, char** argv ) :
 	rpUpdateFlag(false),
 	mocapPosUpdateFlag(false),
 	mocapVelUpdateFlag(false),
+	gpsLocalUpdateFlag(false),
+	gpsGlobalUpdateFlag(false),
+	gpsCompHdgUpdateFlag(false),
+	gpsRelAltUpdateFlag(false),
+	gpsRawVelUpdateFlag(false),
 	spInitializedFlag(false)
 	{}
 
@@ -60,8 +65,18 @@ bool QNode::init()
 		mocap_pos_subscriber = n.subscribe<geometry_msgs::PoseStamped>
 			("mavros/mocap/pose", 1, &QNode::mocap_pos_cb, this);
 		mocap_vel_subscriber = n.subscribe<geometry_msgs::TwistStamped>
-			("mavros/mocap/twist", 1, &QNode::mocap_vel_cb, this);
-		
+			("mavros/mocap/twist", 1, &QNode::mocap_vel_cb, this);	
+		gps_local_subscriber = n.subscribe<nav_msgs::Odometry>
+			("mavros/global_position/local", 1, &QNode::gps_local_cb, this);
+		gps_global_subscriber = n.subscribe<sensor_msgs::NavSatFix>
+			("mavros/global_position/global", 1, &QNode::gps_global_cb, this);
+		gps_comp_hdg_subscriber = n.subscribe<std_msgs::Float64>
+			("mavros/global_position/compass_hdg", 1, &QNode::gps_comp_hdg_cb, this);
+		gps_rel_alt_subscriber = n.subscribe<std_msgs::Float64>
+			("mavros/global_position/rel_alt", 1, &QNode::gps_rel_alt_cb, this);
+		gps_raw_vel_subscriber = n.subscribe<geometry_msgs::TwistStamped>
+			("mavros/global_position/raw/gps_vel", 1, &QNode::gps_raw_vel_cb, this);
+
 		// Publication
 		sp_publisher = n.advertise<mavros_msgs::PositionTarget>
 			("mavros/setpoint_raw/local", 1);
@@ -288,15 +303,59 @@ void QNode::run()
 				double vz = mocap_vel.twist.linear.z;
 				double p = 180.0/3.14*mocap_vel.twist.angular.x;
 				double q = 180.0/3.14*mocap_vel.twist.angular.y;
-				double r = 180.0/3.14*mocap_vel.twist.angular.z;
-				
+				double r = 180.0/3.14*mocap_vel.twist.angular.z;	
 				double t = (ros::Time::now() - t_init).toSec();
 
 				Q_EMIT emit_mocap_linear_velocity_data(vx,vy,vz,t);
 				//Q_EMIT emit_mocap_angular_velocity_data(p,q,r,t);
 				mocapVelUpdateFlag = false;
 			}
-
+			if(gpsLocalUpdateFlag)
+			{
+				double x = gps_local.pose.pose.position.x;	
+				double y = gps_local.pose.pose.position.y;	
+				double z = gps_local.pose.pose.position.x;	
+				double vx = gps_local.twist.twist.linear.x;	
+				double vy = gps_local.twist.twist.linear.y;	
+				double vz = gps_local.twist.twist.linear.z;	
+				double t = (ros::Time::now() - t_init).toSec();
+				Q_EMIT emit_gps_local(x,y,z,vx,vy,vz,t);
+				gpsLocalUpdateFlag = false;
+			}
+			if(gpsGlobalUpdateFlag)
+			{
+				double lat = gps_global.latitude;
+				double lon = gps_global.longitude;
+				double alt = gps_global.altitude;
+				int fix = gps_global.status.status;
+				int service = gps_global.status.service;
+				double t = now();
+				Q_EMIT emit_gps_global(lat,lon,alt,fix,service,t);
+				gpsGlobalUpdateFlag = false;
+			}
+			if(gpsCompHdgUpdateFlag)
+			{
+				double hdg = gps_comp_hdg.data;
+				double t = now();
+				Q_EMIT emit_gps_comp_hdg(hdg,t);
+				gpsCompHdgUpdateFlag = false;
+			}
+			if(gpsRelAltUpdateFlag)
+			{
+				double rel_alt = gps_rel_alt.data;
+				double t = now();
+				Q_EMIT emit_gps_rel_alt(rel_alt,t);
+				gpsRelAltUpdateFlag = false;
+			}
+			if(gpsRawVelUpdateFlag)
+			{
+				double vx = gps_raw_vel.twist.linear.x;
+				double vy = gps_raw_vel.twist.linear.y;
+				double vz = gps_raw_vel.twist.linear.z;
+				double t = now();
+				Q_EMIT emit_gps_raw_vel(vx,vy,vz,t);
+				gpsRawVelUpdateFlag = false;
+			}
 
 			if(spInitializedFlag)
 			{
@@ -317,6 +376,7 @@ void QNode::run()
 	Q_EMIT rosShutdown(); // used to signal the gui for a shutdown (useful to roslaunch)
 }
 
+/** subscription callbacks **/
 void QNode::state_cb(const mavros_msgs::State::ConstPtr &msg)
 {
 	current_state = *msg;
@@ -363,6 +423,36 @@ void QNode::mocap_vel_cb(const geometry_msgs::TwistStamped::ConstPtr &msg)
 {
 	mocap_vel = *msg;
 	mocapVelUpdateFlag = true;
+}
+
+void QNode::gps_local_cb(const nav_msgs::Odometry::ConstPtr &msg)
+{
+	gps_local = *msg;
+	gpsLocalUpdateFlag = true;
+}
+
+void QNode::gps_global_cb(const sensor_msgs::NavSatFix::ConstPtr &msg)
+{
+	gps_global = *msg;
+	gpsGlobalUpdateFlag = true;
+}
+
+void QNode::gps_comp_hdg_cb(const std_msgs::Float64::ConstPtr &msg)
+{
+	gps_comp_hdg = *msg;
+	gpsCompHdgUpdateFlag = true;
+}
+
+void QNode::gps_rel_alt_cb(const std_msgs::Float64::ConstPtr &msg)
+{
+	gps_rel_alt = *msg;
+	gpsRelAltUpdateFlag = true;
+}
+
+void QNode::gps_raw_vel_cb(const geometry_msgs::TwistStamped::ConstPtr &msg)
+{
+	gps_raw_vel = *msg;
+	gpsRawVelUpdateFlag = true;
 }
 
 void QNode::initializeSetpoint()

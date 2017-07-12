@@ -40,6 +40,11 @@ class ICSL_GCS : public QMainWindow
 		void set_rp_target_data(double,double,double);
 		void set_arming_state(bool);
 		void set_flight_mode(const char*);
+		void set_gps_local(double,double,double,double,double,double,double);
+		void set_gps_global(double,double,double,int,int,double);
+		void set_gps_comp_hdg(double,double);
+		void set_gps_rel_alt(double,double);
+		void set_gps_raw_vel(double,double,double,double);
 
 		void on_pushButton_connect_ros_clicked();
 		void on_pushButton_connect_px4_clicked();
@@ -66,7 +71,7 @@ class ICSL_GCS : public QMainWindow
 		QNode qnode;
 		bool initializationFlag;
 	
-		DrawingModule* graph[12];
+		DrawingModule* graph[25];
 		LoggingModule* logger;
 		ParameterModule* param;
 		KeyboardModule* keyboard;
