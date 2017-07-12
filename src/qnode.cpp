@@ -32,11 +32,11 @@ bool QNode::init()
 		if (!ros::master::check())
 		{
 			log("Failed to connect ROS master");
-			Q_EMIT pushButton_connect_ros_color(false);
+			Q_EMIT emit_pushButton_connect_ros_color(false);
 			return false;
 		}
 		ROSConnectionFlag = true;
-		Q_EMIT pushButton_connect_ros_color(true);
+		Q_EMIT emit_pushButton_connect_ros_color(true);
 		log("Connected to ROS master");
 
 		ros::start(); // explicitly needed since our nodehandle is going out of scope.
@@ -151,17 +151,29 @@ void QNode::setOffboard()
 		log("Offboard mode transition falied");
 }
 
+void QNode::setManual()
+{
+	mavros_msgs::SetMode set_mode;
+	set_mode.request.custom_mode = "MANUAL";
+
+	if(set_mode_client.call(set_mode) && set_mode.response.success)
+		log("Manual mode enabled");
+	else
+		log("Manual mode transition falied");
+}
+
 bool QNode::connect_px4()
 {
 	if(!ROSConnectionFlag)
 	{
 		log("Connect ROS master before connecting PX4");
-		Q_EMIT pushButton_connect_ros_color(false);
+		Q_EMIT emit_pushButton_connect_ros_color(false);
 		return false;
 	}
 	else
 	{
-		if(initializationFlag) log("Already connected to PX4");
+		if(initializationFlag) 
+			log("Already connected to PX4");
 		else
 		{
 			ros::spinOnce();
@@ -169,14 +181,15 @@ bool QNode::connect_px4()
 			{
 				log("Connected to PX4");
 				initializationFlag = true;
-				Q_EMIT pushButton_connect_px4_color(true);
+
+				Q_EMIT emit_pushButton_connect_px4_color(true);
 				Q_EMIT emit_initialization();
 				return true;
 			}
 			else
 			{
 				log("Failed to connect PX4");
-				Q_EMIT pushButton_connect_px4_color(false);
+				Q_EMIT emit_pushButton_connect_px4_color(false);
 				return false;
 			}
 		}
@@ -197,14 +210,14 @@ void QNode::run()
 			if(PX4StateTimer>PX4_LOSS_TIME && !PX4DisconnectionFlag)
 			{
 				log("[Error] PX4 signal loss!");
-				Q_EMIT pushButton_connect_px4_color(false);
+				Q_EMIT emit_pushButton_connect_px4_color(false);
 				PX4DisconnectionFlag = true;
 				PX4ConnectionFlag = false;
 			}
 			if(PX4DisconnectionFlag && PX4StateTimer<PX4_LOSS_TIME)
 			{
 				log("[Info] PX4 signal regained");
-				Q_EMIT pushButton_connect_px4_color(true);
+				Q_EMIT emit_pushButton_connect_px4_color(true);
 				PX4DisconnectionFlag = false;
 			}
 
@@ -270,7 +283,17 @@ void QNode::state_cb(const mavros_msgs::State::ConstPtr &msg)
 	current_state = *msg;
 
 	PX4ConnectionFlag = msg->connected;
-	if(PX4ConnectionFlag) PX4StateTimer = 0.0;
+	
+	if(PX4ConnectionFlag)
+	{
+		PX4StateTimer = 0.0;
+	}
+	
+	if(initializationFlag)
+	{
+		Q_EMIT emit_arming_state( current_state.armed );
+		Q_EMIT emit_flight_mode( current_state.mode.c_str() );
+	}
 }
 
 void QNode::lpe_pose_cb(const geometry_msgs::PoseStamped::ConstPtr &msg)

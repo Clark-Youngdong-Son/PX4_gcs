@@ -115,7 +115,7 @@
    <widget class="Line" name="line_5">
     <property name="geometry">
      <rect>
-      <x>200</x>
+      <x>640</x>
       <y>20</y>
       <width>20</width>
       <height>120</height>
@@ -128,7 +128,7 @@
    <widget class="Line" name="line_6">
     <property name="geometry">
      <rect>
-      <x>620</x>
+      <x>1050</x>
       <y>20</y>
       <width>20</width>
       <height>120</height>
@@ -141,9 +141,9 @@
    <widget class="Line" name="line_7">
     <property name="geometry">
      <rect>
-      <x>210</x>
+      <x>650</x>
       <y>10</y>
-      <width>420</width>
+      <width>410</width>
       <height>21</height>
      </rect>
     </property>
@@ -154,9 +154,9 @@
    <widget class="Line" name="line_8">
     <property name="geometry">
      <rect>
-      <x>210</x>
+      <x>650</x>
       <y>130</y>
-      <width>420</width>
+      <width>410</width>
       <height>21</height>
      </rect>
     </property>
@@ -167,7 +167,7 @@
    <widget class="QLabel" name="label_2">
     <property name="geometry">
      <rect>
-      <x>220</x>
+      <x>660</x>
       <y>30</y>
       <width>91</width>
       <height>17</height>
@@ -187,9 +187,9 @@
    <widget class="QListView" name="view_logging">
     <property name="geometry">
      <rect>
-      <x>220</x>
+      <x>670</x>
       <y>60</y>
-      <width>401</width>
+      <width>381</width>
       <height>71</height>
      </rect>
     </property>
@@ -703,7 +703,7 @@
      </font>
     </property>
     <property name="text">
-     <string>State Observer</string>
+     <string>State Moniter</string>
     </property>
    </widget>
    <widget class="Line" name="line_9">
@@ -803,7 +803,7 @@
      <enum>QTabWidget::West</enum>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>2</number>
     </property>
     <property name="elideMode">
      <enum>Qt::ElideNone</enum>
@@ -825,7 +825,7 @@
        <number>10</number>
       </property>
       <property name="rowCount">
-       <number>20</number>
+       <number>1</number>
       </property>
       <attribute name="horizontalHeaderDefaultSectionSize">
        <number>85</number>
@@ -834,7 +834,7 @@
        <number>85</number>
       </attribute>
       <attribute name="verticalHeaderDefaultSectionSize">
-       <number>18</number>
+       <number>25</number>
       </attribute>
       <attribute name="verticalHeaderMinimumSectionSize">
        <number>25</number>
@@ -842,101 +842,6 @@
       <attribute name="verticalHeaderStretchLastSection">
        <bool>false</bool>
       </attribute>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
       <row>
        <property name="text">
         <string/>
@@ -971,7 +876,7 @@
        <number>10</number>
       </property>
       <property name="rowCount">
-       <number>20</number>
+       <number>1</number>
       </property>
       <attribute name="horizontalHeaderDefaultSectionSize">
        <number>85</number>
@@ -980,7 +885,7 @@
        <number>85</number>
       </attribute>
       <attribute name="verticalHeaderDefaultSectionSize">
-       <number>18</number>
+       <number>25</number>
       </attribute>
       <attribute name="verticalHeaderMinimumSectionSize">
        <number>25</number>
@@ -988,101 +893,6 @@
       <attribute name="verticalHeaderStretchLastSection">
        <bool>false</bool>
       </attribute>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
       <row>
        <property name="text">
         <string/>
@@ -1117,7 +927,7 @@
        <number>10</number>
       </property>
       <property name="rowCount">
-       <number>20</number>
+       <number>1</number>
       </property>
       <attribute name="horizontalHeaderDefaultSectionSize">
        <number>85</number>
@@ -1126,7 +936,7 @@
        <number>85</number>
       </attribute>
       <attribute name="verticalHeaderDefaultSectionSize">
-       <number>18</number>
+       <number>25</number>
       </attribute>
       <attribute name="verticalHeaderMinimumSectionSize">
        <number>25</number>
@@ -1134,101 +944,6 @@
       <attribute name="verticalHeaderStretchLastSection">
        <bool>false</bool>
       </attribute>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
       <row>
        <property name="text">
         <string/>
@@ -1343,6 +1058,118 @@
     </property>
     <property name="text">
      <string>Load</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_arming">
+    <property name="geometry">
+     <rect>
+      <x>230</x>
+      <y>60</y>
+      <width>160</width>
+      <height>66</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>18</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Disarmed</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_6">
+    <property name="geometry">
+     <rect>
+      <x>220</x>
+      <y>30</y>
+      <width>91</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Command</string>
+    </property>
+   </widget>
+   <widget class="Line" name="line_17">
+    <property name="geometry">
+     <rect>
+      <x>620</x>
+      <y>20</y>
+      <width>20</width>
+      <height>120</height>
+     </rect>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="Line" name="line_18">
+    <property name="geometry">
+     <rect>
+      <x>200</x>
+      <y>20</y>
+      <width>20</width>
+      <height>120</height>
+     </rect>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="Line" name="line_19">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>130</y>
+      <width>420</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="Line" name="line_20">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>10</y>
+      <width>420</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_flight_mode">
+    <property name="geometry">
+     <rect>
+      <x>450</x>
+      <y>60</y>
+      <width>160</width>
+      <height>66</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>18</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Manual</string>
     </property>
    </widget>
   </widget>

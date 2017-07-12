@@ -17,37 +17,33 @@ ICSL_GCS::ICSL_GCS(int argc, char** argv, QWidget *parent)
 
 	setWindowIcon(QIcon(":/images/ICSL.png"));
     
-	QObject::connect(&qnode, SIGNAL(rosShutdown()), this, 
-			SLOT(close()));
+	QObject::connect(&qnode, SIGNAL(rosShutdown()), 
+					this, SLOT(close()));
+	QObject::connect(&qnode, SIGNAL(emit_log_message(const std::string&)), 
+					this, SLOT(set_log_message(const std::string&)));
+	QObject::connect(&qnode, SIGNAL(emit_pushButton_connect_ros_color(bool)), 
+					this, SLOT(set_pushButton_connect_ros_color(bool))); 
+	QObject::connect(&qnode, SIGNAL(emit_pushButton_connect_px4_color(bool)), 
+					this, SLOT(set_pushButton_connect_px4_color(bool))); 
+	QObject::connect(&qnode, SIGNAL(emit_initialization()), 
+					this, SLOT(set_initialization())); 
+	QObject::connect(&qnode, SIGNAL(emit_lpe_position_data(double,double,double,double)), 
+					this, SLOT(set_lpe_position_data(double,double,double,double))); 
+	QObject::connect(&qnode, SIGNAL(emit_lpe_linear_velocity_data(double,double,double,double)), 
+					this, SLOT(set_lpe_linear_velocity_data(double,double,double,double))); 
+	QObject::connect(&qnode, SIGNAL(emit_lpe_attitude_data(double,double,double,double)), 
+					this, SLOT(set_lpe_attitude_data(double,double,double,double))); 
+	QObject::connect(&qnode, SIGNAL(emit_lpe_angular_velocity_data(double,double,double,double)), 
+					this, SLOT(set_lpe_angular_velocity_data(double,double,double,double))); 
+	QObject::connect(&qnode, SIGNAL(emit_sp_position_data(double,double,double,double)), 
+					this, SLOT(set_sp_position_data(double,double,double,double))); 
+	QObject::connect(&qnode, SIGNAL(emit_rp_target_data(double,double,double)), 
+					this, SLOT(set_rp_target_data(double,double,double))); 
 
-	QObject::connect(&qnode, SIGNAL(emit_log_message(const std::string&)), this, 
-			SLOT(set_log_message(const std::string&)));
-
-	QObject::connect(&qnode, SIGNAL(pushButton_connect_ros_color(bool)), this, 
-			SLOT(set_pushButton_connect_ros_color(bool))); 
-	QObject::connect(&qnode, SIGNAL(pushButton_connect_px4_color(bool)), this, 
-			SLOT(set_pushButton_connect_px4_color(bool))); 
-	QObject::connect(&qnode, SIGNAL(emit_initialization()), this, 
-			SLOT(set_initialization())); 
-	
-	QObject::connect(&qnode, 
-			SIGNAL(emit_lpe_position_data(double,double,double,double)), this, 
-			SLOT(set_lpe_position_data(double,double,double,double))); 
-	QObject::connect(&qnode, 
-			SIGNAL(emit_lpe_linear_velocity_data(double,double,double,double)), this, 
-			SLOT(set_lpe_linear_velocity_data(double,double,double,double))); 
-	QObject::connect(&qnode, 
-			SIGNAL(emit_lpe_attitude_data(double,double,double,double)), this, 
-			SLOT(set_lpe_attitude_data(double,double,double,double))); 
-	QObject::connect(&qnode, 
-			SIGNAL(emit_lpe_angular_velocity_data(double,double,double,double)), this, 
-			SLOT(set_lpe_angular_velocity_data(double,double,double,double))); 
-	QObject::connect(&qnode, 
-			SIGNAL(emit_sp_position_data(double,double,double,double)), this, 
-			SLOT(set_sp_position_data(double,double,double,double))); 
-	QObject::connect(&qnode, 
-			SIGNAL(emit_rp_target_data(double,double,double)), this, 
-			SLOT(set_rp_target_data(double,double,double))); 
+	QObject::connect(&qnode, SIGNAL(emit_arming_state(bool)), 
+					this, SLOT(set_arming_state(bool)));
+	QObject::connect(&qnode, SIGNAL(emit_flight_mode(const char*)), 
+					this, SLOT(set_flight_mode(const char*)));
 
 	logger = new LoggingModule( ui.view_logging );
 	
@@ -73,16 +69,6 @@ ICSL_GCS::~ICSL_GCS()
 void ICSL_GCS::set_log_message(const std::string &msg)
 {
 	log( msg );
-}
-
-void ICSL_GCS::on_pushButton_connect_ros_clicked()
-{
-	qnode.init();
-}
-
-void ICSL_GCS::on_pushButton_connect_px4_clicked()
-{
-	qnode.connect_px4();
 }
 
 void ICSL_GCS::set_pushButton_connect_ros_color(bool flag)
@@ -137,6 +123,44 @@ void ICSL_GCS::set_rp_target_data(double r_t, double p_t, double t)
 {
 	graph[6]->draw(t, r_t, 1);
 	graph[7]->draw(t, p_t, 1);
+}
+
+void ICSL_GCS::set_arming_state(bool armed)
+{
+	if(armed)
+	{
+		ui.pushButton_arming->setStyleSheet("background-color: rgba(255,0,0,128);");
+		ui.pushButton_arming->setText( QString("Armed") );
+	}
+	else
+	{
+		ui.pushButton_arming->setStyleSheet("background-color: rgba(0,255,0,128);");
+		ui.pushButton_arming->setText( QString("Disarmed") );
+	}
+}
+
+void ICSL_GCS::set_flight_mode(const char* mode)
+{
+	if( !strcmp(mode, "OFFBOARD") )
+	{	// offboard
+		ui.pushButton_flight_mode->setText( QString("Offboard") );
+		ui.pushButton_flight_mode->setStyleSheet("background-color: rgba(255,0,0,128);");	
+	}
+	else
+	{	// else
+		ui.pushButton_flight_mode->setText( QString("Manual") );
+		ui.pushButton_flight_mode->setStyleSheet("background-color: rgba(0,255,0,128);");
+	}
+}
+
+void ICSL_GCS::on_pushButton_connect_ros_clicked()
+{
+	qnode.init();
+}
+
+void ICSL_GCS::on_pushButton_connect_px4_clicked()
+{
+	qnode.connect_px4();
 }
 
 void ICSL_GCS::on_pushButton_set_gain_clicked()
@@ -211,6 +235,31 @@ void ICSL_GCS::on_pushButton_save_gain_clicked()
 	}
 	else
 		return;
+}
+
+void ICSL_GCS::on_pushButton_arming_clicked()
+{
+	if( !strcmp( ui.pushButton_arming->text().toStdString().c_str(), "Armed" ) )
+	{	// it is armed, so disarm
+		qnode.setDisarm();
+	}
+	else
+	{
+		qnode.setArm();
+	}
+}
+
+void ICSL_GCS::on_pushButton_flight_mode_clicked()
+{
+	if( !strcmp( ui.pushButton_flight_mode->text().toStdString().c_str(), "Offboard" ) )
+	{	// it is offboard, so change to manual
+		qnode.setManual();
+	}
+	else
+	{
+		qnode.setOffboard();
+	}
+//	log( ui.pushButton_flight_mode->text().toStdString() );
 }
 
 void ICSL_GCS::setupGraph()

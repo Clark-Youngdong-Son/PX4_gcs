@@ -7,7 +7,6 @@ namespace px4_gcs
 
 ParameterModule::ParameterModule()
 { 
-	blank = "                         ";
 	widgets.clear();
 	headers.clear();
 	names.clear();
@@ -20,16 +19,6 @@ ParameterModule::~ParameterModule()
 	headers.clear();
 	names.clear();
 	types.clear();
-}
-
-void ParameterModule::add_widget( QTableWidget* _widget )
-{	
-	QStringList labels;
-	for(int i=0; i<20; i++)
-		labels << blank.c_str();
-	
-	_widget->setVerticalHeaderLabels(labels);
-	widgets.push_back( _widget );
 }
 
 void ParameterModule::load( string filename )
@@ -81,6 +70,7 @@ void ParameterModule::load( string filename )
 			child = child->next->next;
 			j++;
 		}
+		widgets[i]->setRowCount( _header.length() );
 		widgets[i]->setVerticalHeaderLabels( _header );
 		names.push_back( _name );
 		headers.push_back( _header );

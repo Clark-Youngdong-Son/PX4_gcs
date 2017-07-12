@@ -45,6 +45,7 @@ public:
 	void setArm(); 
 	void setDisarm();
 	void setOffboard();
+	void setManual();
 	void increaseHeight(){ spInitializedFlag ? sp.position.z += 0.2 : sp.position.z += 0.0; }
 	void decreaseHeight(){ spInitializedFlag ? sp.position.z -= 0.2 : sp.position.z -= 0.0; }
 	void moveLeft(){ spInitializedFlag ? sp.position.y += 0.2 : sp.position.y += 0.0; }
@@ -54,8 +55,8 @@ public:
 
 Q_SIGNALS:
     void rosShutdown();
-	void pushButton_connect_ros_color(bool);
-	void pushButton_connect_px4_color(bool);
+	void emit_pushButton_connect_ros_color(bool);
+	void emit_pushButton_connect_px4_color(bool);
 	void emit_initialization();
 	void emit_log_message(const std::string&);
 	void emit_lpe_position_data(double,double,double,double);
@@ -64,6 +65,8 @@ Q_SIGNALS:
 	void emit_lpe_angular_velocity_data(double,double,double,double);
 	void emit_sp_position_data(double,double,double,double);
 	void emit_rp_target_data(double,double,double);
+	void emit_arming_state(bool);
+	void emit_flight_mode( const char* );
 
 private:
 	int init_argc;

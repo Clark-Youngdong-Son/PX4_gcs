@@ -24,12 +24,9 @@ class ICSL_GCS : public QMainWindow
 		~ICSL_GCS();
 	
 	public Q_SLOTS:
-		void on_pushButton_connect_ros_clicked();
-		void on_pushButton_connect_px4_clicked();
 		void set_pushButton_connect_ros_color(bool);
 		void set_pushButton_connect_px4_color(bool);
 		void set_initialization();
-	
 		void set_log_message(const std::string&);
 		void set_lpe_position_data(double,double,double,double);
 		void set_lpe_linear_velocity_data(double,double,double,double);
@@ -37,22 +34,28 @@ class ICSL_GCS : public QMainWindow
 		void set_lpe_angular_velocity_data(double,double,double,double);
 		void set_sp_position_data(double,double,double,double);
 		void set_rp_target_data(double,double,double);
+		void set_arming_state(bool);
+		void set_flight_mode(const char*);
 
+		void on_pushButton_connect_ros_clicked();
+		void on_pushButton_connect_px4_clicked();
 		void on_pushButton_set_gain_clicked();
 		void on_pushButton_get_gain_clicked();
 		void on_pushButton_load_gain_clicked();
 		void on_pushButton_save_gain_clicked();
+		void on_pushButton_arming_clicked();
+		void on_pushButton_flight_mode_clicked();
 
 		// keyboard interaction
-		void on_btn_Z_pressed(){ qnode.setArm(); }
-		void on_btn_Space_pressed(){ qnode.setDisarm(); }
-		void on_btn_X_pressed(){ qnode.setOffboard(); }
 		void on_btn_O_pressed(){ qnode.decreaseHeight(); }
 		void on_btn_P_pressed(){ qnode.increaseHeight(); }
 		void on_btn_A_pressed(){ qnode.moveLeft(); }
 		void on_btn_D_pressed(){ qnode.moveRight(); }
 		void on_btn_W_pressed(){ qnode.moveForward(); }
 		void on_btn_S_pressed(){ qnode.moveBackward(); }
+		//void on_btn_Z_pressed(){ qnode.setArm(); }
+		//void on_btn_Space_pressed(){ qnode.setDisarm(); }
+		//void on_btn_X_pressed(){ qnode.setOffboard(); }
 
 	private:
 		Ui::ICSL_GCS ui;
