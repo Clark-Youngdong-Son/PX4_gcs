@@ -37,6 +37,7 @@ class ICSL_GCS : public QMainWindow
 		void set_mocap_attitude_data(double,double,double,double);
 		void set_mocap_angular_velocity_data(double,double,double,double);
 		void set_sp_position_data(double,double,double,double);
+		void set_sp_velocity_data(double,double,double,double);
 		void set_rp_target_data(double,double,double);
 		void set_arming_state(bool);
 		void set_flight_mode(const char*);
@@ -55,9 +56,13 @@ class ICSL_GCS : public QMainWindow
 		void on_pushButton_arming_clicked();
 		void on_pushButton_flight_mode_clicked();
 
+//		void on_ignore_pxy_stateChanged(int);
+
 		// keyboard interaction
 		void on_btn_O_pressed(){ qnode.decreaseHeight(); }
 		void on_btn_P_pressed(){ qnode.increaseHeight(); }
+		//void on_btn_O_pressed(){ qnode.decreaseHeightVel(); }
+		//void on_btn_P_pressed(){ qnode.increaseHeightVel(); }
 		void on_btn_A_pressed(){ qnode.moveLeft(); }
 		void on_btn_D_pressed(){ qnode.moveRight(); }
 		void on_btn_W_pressed(){ qnode.moveForward(); }

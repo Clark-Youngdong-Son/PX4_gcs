@@ -44,6 +44,8 @@ ICSL_GCS::ICSL_GCS(int argc, char** argv, QWidget *parent)
 	QObject::connect(&qnode, SIGNAL(emit_mocap_angular_velocity_data(double,double,double,double)), 				   this, SLOT(set_mocap_angular_velocity_data(double,double,double,double))); 
 	QObject::connect(&qnode, SIGNAL(emit_sp_position_data(double,double,double,double)), 
 					this, SLOT(set_sp_position_data(double,double,double,double))); 
+	QObject::connect(&qnode, SIGNAL(emit_sp_velocity_data(double,double,double,double)), 
+					this, SLOT(set_sp_velocity_data(double,double,double,double))); 
 	QObject::connect(&qnode, SIGNAL(emit_rp_target_data(double,double,double)), 
 					this, SLOT(set_rp_target_data(double,double,double))); 
 
@@ -160,6 +162,13 @@ void ICSL_GCS::set_sp_position_data(double x, double y, double z, double t)
 	graph[0]->draw(t, x, 1);
 	graph[1]->draw(t, y, 1);
 	graph[2]->draw(t, z, 1);
+}
+
+void ICSL_GCS::set_sp_velocity_data(double x, double y, double z, double t)
+{
+//	graph[3]->draw(t, x, 1);
+//	graph[4]->draw(t, y, 1);
+//	graph[5]->draw(t, z, 1);
 }
 
 void ICSL_GCS::set_rp_target_data(double r_t, double p_t, double t)
@@ -341,32 +350,41 @@ void ICSL_GCS::on_pushButton_flight_mode_clicked()
 //	log( ui.pushButton_flight_mode->text().toStdString() );
 }
 
+//void ICSL_GCS::on_ignore_pxy_stateChanged(int state)
+//{
+////	std::cout << state << std::endl;
+//	if( state == 2 )
+//		qnode.setSpMasPxy(true);
+//	else
+//		qnode.setSpMaskPxy(false);
+//}
+
 void ICSL_GCS::setupGraph()
 {
 	// graph settings, it would be more desirable if we can set these params at runtime
 	graph[0] = new DrawingModule( ui.widget_p_x );
-	graph[0]->setMargin(0.2);
-	graph[0]->setYLims(-1.0, 1.0);
+	graph[0]->setMargin(0.1);
+	graph[0]->setYLims(-0.5, 0.5);
 
 	graph[1] = new DrawingModule( ui.widget_p_y );
-	graph[1]->setMargin(0.2);
-	graph[1]->setYLims(-1.0, 1.0);
+	graph[1]->setMargin(0.1);
+	graph[1]->setYLims(-0.5, 0.5);
 
 	graph[2] = new DrawingModule( ui.widget_p_z );
-	graph[2]->setMargin(0.2);
-	graph[2]->setYLims(-1.0, 1.0);
+	graph[2]->setMargin(0.1);
+	graph[2]->setYLims(-0.5, 0.5);
 
 	graph[3] = new DrawingModule( ui.widget_v_x );
-	graph[3]->setMargin(0.2);
-	graph[3]->setYLims(-1.0, 1.0);
+	graph[3]->setMargin(0.1);
+	graph[3]->setYLims(-0.5, 0.5);
 	
 	graph[4] = new DrawingModule( ui.widget_v_y );
-	graph[4]->setMargin(0.2);
-	graph[4]->setYLims(-1.0, 1.0);
+	graph[4]->setMargin(0.1);
+	graph[4]->setYLims(-0.5, 0.5);
 	
 	graph[5] = new DrawingModule( ui.widget_v_z );
-	graph[5]->setMargin(0.2);
-	graph[5]->setYLims(-1.0, 1.0);
+	graph[5]->setMargin(0.1);
+	graph[5]->setYLims(-0.5, 0.5);
 	
 	graph[6] = new DrawingModule( ui.widget_roll );
 	graph[6]->setMargin(2.0);
@@ -393,44 +411,44 @@ void ICSL_GCS::setupGraph()
 	graph[11]->setYLims(-30.0, 30.0);
 
 	graph[12] = new DrawingModule( ui.widget_gps_local_x );
-	graph[12]->setMargin(0.4);
-	graph[12]->setYLims(-2.0, 2.0);
+	graph[12]->setMargin(0.1);
+	graph[12]->setYLims(-0.5, 0.5);
 	
 	graph[13] = new DrawingModule( ui.widget_gps_local_y );
-	graph[13]->setMargin(0.4);
-	graph[13]->setYLims(-2.0, 2.0);
+	graph[13]->setMargin(0.1);
+	graph[13]->setYLims(-0.5, 0.5);
 	
 	graph[14] = new DrawingModule( ui.widget_gps_local_z );
-	graph[14]->setMargin(0.4);
-	graph[14]->setYLims(-2.0, 2.0);
+	graph[14]->setMargin(0.1);
+	graph[14]->setYLims(-0.5, 0.5);
 	
 	graph[15] = new DrawingModule( ui.widget_gps_local_vx );
-	graph[15]->setMargin(0.8);
-	graph[15]->setYLims(-4.0, 4.0);
+	graph[15]->setMargin(0.1);
+	graph[15]->setYLims(-0.5, 0.5);
 	
 	graph[16] = new DrawingModule( ui.widget_gps_local_vy );
-	graph[16]->setMargin(0.8);
-	graph[16]->setYLims(-4.0, 4.0);
+	graph[16]->setMargin(0.1);
+	graph[16]->setYLims(-0.5, 0.5);
 	
 	graph[17] = new DrawingModule( ui.widget_gps_local_vz );
-	graph[17]->setMargin(0.8);
-	graph[17]->setYLims(-4.0, 4.0);
+	graph[17]->setMargin(0.1);
+	graph[17]->setYLims(-0.5, 0.5);
 	
 	graph[18] = new DrawingModule( ui.widget_gps_lat );
-	graph[18]->setMargin(0.2);
-	graph[18]->setYLims(-1.0, 1.0);
+	graph[18]->setMargin(0.004);
+	graph[18]->setYLims(-0.02, 0.02);
 	
 	graph[19] = new DrawingModule( ui.widget_gps_lon );
-	graph[19]->setMargin(0.2);
-	graph[19]->setYLims(-1.0, 1.0);
+	graph[19]->setMargin(0.004);
+	graph[19]->setYLims(-0.02, 0.02);
 	
 	graph[20] = new DrawingModule( ui.widget_gps_alt );
-	graph[20]->setMargin(0.6);
-	graph[20]->setYLims(-3.0, 3.0);
+	graph[20]->setMargin(0.02);
+	graph[20]->setYLims(-0.1, 0.1);
 	
 	graph[21] = new DrawingModule( ui.widget_gps_rel_alt );
-	graph[21]->setMargin(0.6);
-	graph[21]->setYLims(-3.0, 3.0);
+	graph[21]->setMargin(0.02);
+	graph[21]->setYLims(-0.1, 0.1);
 	
 	graph[22] = new DrawingModule( ui.widget_gps_comp_hdg );
 	graph[22]->setMargin(2.0);

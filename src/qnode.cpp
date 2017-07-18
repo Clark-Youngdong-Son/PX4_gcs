@@ -365,9 +365,13 @@ void QNode::run()
 				double x = sp.position.x;
 				double y = sp.position.y;
 				double z = sp.position.z;
+				double vx = sp.velocity.x;
+				double vy = sp.velocity.y;
+				double vz = sp.velocity.z;
 				double t = (sp.header.stamp - t_init).toSec();
 
 				Q_EMIT emit_sp_position_data(x,y,z,t);
+				//Q_EMIT emit_sp_velocity_data(vx,vy,vz,t);
 			}
 		}
 		loop_rate.sleep();
@@ -458,7 +462,9 @@ void QNode::gps_raw_vel_cb(const geometry_msgs::TwistStamped::ConstPtr &msg)
 void QNode::initializeSetpoint()
 {
 	sp.coordinate_frame = sp.FRAME_LOCAL_NED;
+	sp.header.frame_id = "fcu";
 	sp.type_mask = sp.IGNORE_AFX | sp.IGNORE_AFY | sp.IGNORE_AFZ;
+	//sp.type_mask = sp.IGNORE_PZ | sp.IGNORE_AFX | sp.IGNORE_AFY | sp.IGNORE_AFZ;
 
 	// position sp mode
 	sp.position = lpe_pose.pose.position;
@@ -601,6 +607,16 @@ bool QNode::setGain(std::string gainName, int gainValue)
 		return true;
 	else 
 		return false;
+}
+
+void setSpMaskPxy(bool tf)
+{
+	if(tf)
+	{
+	}
+	else
+	{
+	}
 }
 
 void q2e(const double q0, const double q1, const double q2, const double q3, 

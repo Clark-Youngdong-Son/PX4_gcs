@@ -54,6 +54,8 @@ public:
 	void moveRight(){ spInitializedFlag ? sp.position.y -= 0.2 : sp.position.y -= 0.0; }
 	void moveForward(){ spInitializedFlag ? sp.position.x += 0.2 : sp.position.x += 0.0; }
 	void moveBackward(){ spInitializedFlag ? sp.position.x -= 0.2 : sp.position.x -= 0.0; }
+	void increaseHeightVel(){ spInitializedFlag ? sp.velocity.z += 0.1 : sp.velocity.z += 0.0; }
+	void decreaseHeightVel(){ spInitializedFlag ? sp.velocity.z -= 0.1 : sp.velocity.z -= 0.0; }
 
 Q_SIGNALS:
     void rosShutdown();
@@ -66,6 +68,7 @@ Q_SIGNALS:
 	void emit_lpe_attitude_data(double,double,double,double);
 	void emit_lpe_angular_velocity_data(double,double,double,double);
 	void emit_sp_position_data(double,double,double,double);
+	void emit_sp_velocity_data(double,double,double,double);
 	void emit_rp_target_data(double,double,double);
 	void emit_mocap_position_data(double,double,double,double);
 	void emit_mocap_linear_velocity_data(double,double,double,double);
@@ -156,6 +159,7 @@ private:
 	bool getGain(std::string, int&);
 	bool setGain(std::string, double);
 	bool setGain(std::string, int);
+	void setSpMaskPxy(bool);
 };
 
 void q2e(const double, const double, const double, const double, double&, double&, double&);
