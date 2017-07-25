@@ -23,21 +23,19 @@ class ParameterModule : public Module
 	public:
 		ParameterModule();
 		~ParameterModule();
-		void add_widget( QTableWidget* );
 		void load( std::string );
 		void save( std::string );
 	
+		void add_widget( QTableWidget* _widget ){ widgets.push_back( _widget ); }
 		void log( const std::string );
 		void update_fcu_values( std::vector<std::string>, std::vector<double> );
-		void query_names( std::vector<std::string>& );
-		void query_gcs_values( std::vector<std::string>&, std::vector<double>& );
+		void query_list( std::vector<std::string>&, std::vector<std::string>&, std::vector<double>& );
 
 	private:
 		std::vector<QTableWidget*> widgets;
 		std::vector<QStringList> headers;
 		std::vector<QStringList> names;
-
-		std::string blank;
+		std::vector<QStringList> types;
 };
 
 } // namespace px4_gcs

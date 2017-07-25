@@ -10,7 +10,17 @@ QNode::QNode(int argc, char** argv ) :
 	PX4DisconnectionFlag(false), ROSDisconnectionFlag(false),
 	initializationFlag(false),
 	PX4StateTimer(0.0),
-	lpePoseUpdateFlag(false),lpeTwistUpdateFlag(false),spUpdateFlag(false),rpUpdateFlag(false)
+	lpePoseUpdateFlag(false),
+	lpeTwistUpdateFlag(false),
+	rpUpdateFlag(false),
+	mocapPosUpdateFlag(false),
+	mocapVelUpdateFlag(false),
+	gpsLocalUpdateFlag(false),
+	gpsGlobalUpdateFlag(false),
+	gpsCompHdgUpdateFlag(false),
+	gpsRelAltUpdateFlag(false),
+	gpsRawVelUpdateFlag(false),
+	spInitializedFlag(false)
 	{}
 
 QNode::~QNode() 
@@ -31,11 +41,11 @@ bool QNode::init()
 		if (!ros::master::check())
 		{
 			log("Failed to connect ROS master");
-			Q_EMIT pushButton_connect_ros_color(false);
+			Q_EMIT emit_pushButton_connect_ros_color(false);
 			return false;
 		}
 		ROSConnectionFlag = true;
-		Q_EMIT pushButton_connect_ros_color(true);
+		Q_EMIT emit_pushButton_connect_ros_color(true);
 		log("Connected to ROS master");
 
 		ros::start(); // explicitly needed since our nodehandle is going out of scope.
@@ -43,19 +53,40 @@ bool QNode::init()
 
 		t_init = ros::Time::now();
 
-		chatter_publisher = n.advertise<std_msgs::String>("chatter", 1000);
-		state_subscriber = n.subscribe<mavros_msgs::State>("mavros/state", 1, &QNode::state_cb, this);
-		lpe_pose_subscriber = n.subscribe<geometry_msgs::PoseStamped>(
-				"mavros/local_position/pose", 1, &QNode::lpe_pose_cb, this);
-		lpe_twist_subscriber = n.subscribe<geometry_msgs::TwistStamped>(
-				"mavros/local_position/velocity", 1, &QNode::lpe_twist_cb, this);
-		sp_subscriber = n.subscribe<mavros_msgs::PositionTarget>(
-				"mavros/setpoint_raw/local", 1, &QNode::sp_cb, this);
-		rp_subscriber = n.subscribe<mavros_msgs::RollPitchTarget>(
-				"mavros/rp_target", 1, &QNode::rp_cb, this);
+		// Subscription
+		state_subscriber = n.subscribe<mavros_msgs::State>
+			("mavros/state", 1, &QNode::state_cb, this);
+		lpe_pose_subscriber = n.subscribe<geometry_msgs::PoseStamped>
+			("mavros/local_position/pose", 1, &QNode::lpe_pose_cb, this);
+		lpe_twist_subscriber = n.subscribe<geometry_msgs::TwistStamped>
+			("mavros/local_position/velocity", 1, &QNode::lpe_twist_cb, this);
+		rp_subscriber = n.subscribe<mavros_msgs::RollPitchTarget>
+			("mavros/rp_target", 1, &QNode::rp_cb, this);
+		mocap_pos_subscriber = n.subscribe<geometry_msgs::PoseStamped>
+			("mavros/mocap/pose", 1, &QNode::mocap_pos_cb, this);
+		mocap_vel_subscriber = n.subscribe<geometry_msgs::TwistStamped>
+			("mavros/mocap/twist", 1, &QNode::mocap_vel_cb, this);	
+		gps_local_subscriber = n.subscribe<nav_msgs::Odometry>
+			("mavros/global_position/local", 1, &QNode::gps_local_cb, this);
+		gps_global_subscriber = n.subscribe<sensor_msgs::NavSatFix>
+			("mavros/global_position/global", 1, &QNode::gps_global_cb, this);
+		gps_comp_hdg_subscriber = n.subscribe<std_msgs::Float64>
+			("mavros/global_position/compass_hdg", 1, &QNode::gps_comp_hdg_cb, this);
+		gps_rel_alt_subscriber = n.subscribe<std_msgs::Float64>
+			("mavros/global_position/rel_alt", 1, &QNode::gps_rel_alt_cb, this);
+		gps_raw_vel_subscriber = n.subscribe<geometry_msgs::TwistStamped>
+			("mavros/global_position/raw/gps_vel", 1, &QNode::gps_raw_vel_cb, this);
 
+		// Publication
+		sp_publisher = n.advertise<mavros_msgs::PositionTarget>
+			("mavros/setpoint_raw/local", 1);
+
+		// Services
 		get_gain_client = n.serviceClient<mavros_msgs::ParamGet>("mavros/param/get");
 		set_gain_client = n.serviceClient<mavros_msgs::ParamSet>("mavros/param/set");
+		arming_client = n.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
+		set_mode_client = n.serviceClient<mavros_msgs::SetMode>("mavros/set_mode");
+
 		start();
 		return true;
 	}
@@ -65,17 +96,107 @@ bool QNode::init()
 	}
 }
 
+void QNode::setArm()
+{
+	bool success = false;
+
+	if(PX4ConnectionFlag)
+	{
+		if(current_state.armed) // px4 is already armed.
+		{
+			log( "PX4 is already armed" );
+			success = true;
+		}
+		else // px4 is disarmed, so try to arm.
+		{
+			arm_cmd.request.value = true;
+			if( arming_client.call(arm_cmd) && arm_cmd.response.success )
+			{
+				log("Armed");
+				initializeSetpoint();
+				success = true;
+			}
+			else
+			{
+				log("Arming failed");
+				success = false;
+			}
+		}
+	}
+	else
+	{
+		log("Connect PX4 first");
+		success = false;
+	}
+}
+
+void QNode::setDisarm()
+{
+	bool success = false;
+
+	if(PX4ConnectionFlag)
+	{
+		if(!current_state.armed) // px4 is already armed.
+		{
+			log( "PX4 is already disarmed" );
+			success = true;
+		}
+		else // px4 is disarmed, so try to arm.
+		{
+			arm_cmd.request.value = false;
+			if( arming_client.call(arm_cmd) && arm_cmd.response.success )
+			{
+				log("Disarmed");
+				success = true;
+			}
+			else
+			{
+				log("Disarming failed");
+				success = false;
+			}
+		}
+	}
+	else
+	{
+		log("Connect PX4 first");
+		success = false;
+	}
+}
+
+void QNode::setOffboard()
+{
+	mavros_msgs::SetMode set_mode;
+	set_mode.request.custom_mode = "OFFBOARD";
+
+	if(set_mode_client.call(set_mode) && set_mode.response.success)
+		log("Offboard mode enabled");
+	else
+		log("Offboard mode transition falied");
+}
+
+void QNode::setManual()
+{
+	mavros_msgs::SetMode set_mode;
+	set_mode.request.custom_mode = "MANUAL";
+
+	if(set_mode_client.call(set_mode) && set_mode.response.success)
+		log("Manual mode enabled");
+	else
+		log("Manual mode transition falied");
+}
+
 bool QNode::connect_px4()
 {
 	if(!ROSConnectionFlag)
 	{
 		log("Connect ROS master before connecting PX4");
-		Q_EMIT pushButton_connect_ros_color(false);
+		Q_EMIT emit_pushButton_connect_ros_color(false);
 		return false;
 	}
 	else
 	{
-		if(initializationFlag) log("Already connected to PX4");
+		if(initializationFlag) 
+			log("Already connected to PX4");
 		else
 		{
 			ros::spinOnce();
@@ -83,21 +204,23 @@ bool QNode::connect_px4()
 			{
 				log("Connected to PX4");
 				initializationFlag = true;
-				Q_EMIT pushButton_connect_px4_color(true);
+
+				Q_EMIT emit_pushButton_connect_px4_color(true);
 				Q_EMIT emit_initialization();
 				return true;
 			}
 			else
 			{
 				log("Failed to connect PX4");
-				Q_EMIT pushButton_connect_px4_color(false);
+				Q_EMIT emit_pushButton_connect_px4_color(false);
 				return false;
 			}
 		}
 	}
 }
 
-void QNode::run() {
+void QNode::run() 
+{
 	double rate = 30.0;
 	ros::Rate loop_rate(rate);
 
@@ -110,14 +233,14 @@ void QNode::run() {
 			if(PX4StateTimer>PX4_LOSS_TIME && !PX4DisconnectionFlag)
 			{
 				log("[Error] PX4 signal loss!");
-				Q_EMIT pushButton_connect_px4_color(false);
+				Q_EMIT emit_pushButton_connect_px4_color(false);
 				PX4DisconnectionFlag = true;
 				PX4ConnectionFlag = false;
 			}
 			if(PX4DisconnectionFlag && PX4StateTimer<PX4_LOSS_TIME)
 			{
 				log("[Info] PX4 signal regained");
-				Q_EMIT pushButton_connect_px4_color(true);
+				Q_EMIT emit_pushButton_connect_px4_color(true);
 				PX4DisconnectionFlag = false;
 			}
 
@@ -129,7 +252,7 @@ void QNode::run() {
 				double roll, pitch, yaw;
 				q2e( lpe_pose.pose.orientation, roll, pitch, yaw);
 
-				double t = (lpe_pose.header.stamp - t_init).toSec();
+				double t = (ros::Time::now() - t_init).toSec();
 
 				Q_EMIT emit_lpe_position_data(x,y,z,t);
 				Q_EMIT emit_lpe_attitude_data(roll,pitch,yaw,t);
@@ -144,31 +267,111 @@ void QNode::run() {
 				double q = 180.0/3.14*lpe_twist.twist.angular.y;
 				double r = 180.0/3.14*lpe_twist.twist.angular.z;
 				
-				double t = (lpe_twist.header.stamp - t_init).toSec();
+				double t = (ros::Time::now() - t_init).toSec();
 
 				Q_EMIT emit_lpe_linear_velocity_data(vx,vy,vz,t);
 				Q_EMIT emit_lpe_angular_velocity_data(p,q,r,t);
 				lpeTwistUpdateFlag = false;
-			}
-			if(spUpdateFlag)
-			{
-				double x = sp.position.x;
-				double y = sp.position.y;
-				double z = sp.position.z;
-
-				double t = (sp.header.stamp - t_init).toSec();
-
-				Q_EMIT emit_sp_position_data(x,y,z,t);
-				spUpdateFlag = false;
 			}
 			if(rpUpdateFlag)
 			{
 				double r_target = (180.0/3.14)*rp.roll_target;
 				double p_target = -(180.0/3.14)*rp.pitch_target; //// coordination problem..
 
-				double t = (rp.header.stamp - t_init).toSec();
+				double t = (ros::Time::now() - t_init).toSec();
 
 				Q_EMIT emit_rp_target_data(r_target, p_target, t);
+			}
+			if(mocapPosUpdateFlag)
+			{
+				double x = mocap_pos.pose.position.x;
+				double y = mocap_pos.pose.position.y;
+				double z = mocap_pos.pose.position.z;
+				double roll, pitch, yaw;
+				q2e( mocap_pos.pose.orientation, roll, pitch, yaw);
+
+				double t = (ros::Time::now() - t_init).toSec();
+
+				Q_EMIT emit_mocap_position_data(x,y,z,t);
+				//Q_EMIT emit_mocap_attitude_data(roll,pitch,yaw,t);
+				mocapPosUpdateFlag = false;
+			}
+			if(mocapVelUpdateFlag)
+			{
+				double vx = mocap_vel.twist.linear.x;
+				double vy = mocap_vel.twist.linear.y;
+				double vz = mocap_vel.twist.linear.z;
+				double p = 180.0/3.14*mocap_vel.twist.angular.x;
+				double q = 180.0/3.14*mocap_vel.twist.angular.y;
+				double r = 180.0/3.14*mocap_vel.twist.angular.z;	
+				double t = (ros::Time::now() - t_init).toSec();
+
+				Q_EMIT emit_mocap_linear_velocity_data(vx,vy,vz,t);
+				//Q_EMIT emit_mocap_angular_velocity_data(p,q,r,t);
+				mocapVelUpdateFlag = false;
+			}
+			if(gpsLocalUpdateFlag)
+			{
+				double x = gps_local.pose.pose.position.x;	
+				double y = gps_local.pose.pose.position.y;	
+				double z = gps_local.pose.pose.position.x;	
+				double vx = gps_local.twist.twist.linear.x;	
+				double vy = gps_local.twist.twist.linear.y;	
+				double vz = gps_local.twist.twist.linear.z;	
+				double t = (ros::Time::now() - t_init).toSec();
+				Q_EMIT emit_gps_local(x,y,z,vx,vy,vz,t);
+				gpsLocalUpdateFlag = false;
+			}
+			if(gpsGlobalUpdateFlag)
+			{
+				double lat = gps_global.latitude;
+				double lon = gps_global.longitude;
+				double alt = gps_global.altitude;
+				int fix = gps_global.status.status;
+				int service = gps_global.status.service;
+				double t = now();
+				Q_EMIT emit_gps_global(lat,lon,alt,fix,service,t);
+				gpsGlobalUpdateFlag = false;
+			}
+			if(gpsCompHdgUpdateFlag)
+			{
+				double hdg = gps_comp_hdg.data;
+				double t = now();
+				Q_EMIT emit_gps_comp_hdg(hdg,t);
+				gpsCompHdgUpdateFlag = false;
+			}
+			if(gpsRelAltUpdateFlag)
+			{
+				double rel_alt = gps_rel_alt.data;
+				double t = now();
+				Q_EMIT emit_gps_rel_alt(rel_alt,t);
+				gpsRelAltUpdateFlag = false;
+			}
+			if(gpsRawVelUpdateFlag)
+			{
+				double vx = gps_raw_vel.twist.linear.x;
+				double vy = gps_raw_vel.twist.linear.y;
+				double vz = gps_raw_vel.twist.linear.z;
+				double t = now();
+				Q_EMIT emit_gps_raw_vel(vx,vy,vz,t);
+				gpsRawVelUpdateFlag = false;
+			}
+
+			if(spInitializedFlag)
+			{
+				sp.header.stamp = ros::Time::now();
+				sp_publisher.publish( sp );	
+
+				double x = sp.position.x;
+				double y = sp.position.y;
+				double z = sp.position.z;
+				double vx = sp.velocity.x;
+				double vy = sp.velocity.y;
+				double vz = sp.velocity.z;
+				double t = (sp.header.stamp - t_init).toSec();
+
+				Q_EMIT emit_sp_position_data(x,y,z,t);
+				//Q_EMIT emit_sp_velocity_data(vx,vy,vz,t);
 			}
 		}
 		loop_rate.sleep();
@@ -177,16 +380,23 @@ void QNode::run() {
 	Q_EMIT rosShutdown(); // used to signal the gui for a shutdown (useful to roslaunch)
 }
 
-
-void QNode::log(const std::string &msg)
-{
-	Q_EMIT emit_log_message( msg );
-}
-
+/** subscription callbacks **/
 void QNode::state_cb(const mavros_msgs::State::ConstPtr &msg)
 {
+	current_state = *msg;
+
 	PX4ConnectionFlag = msg->connected;
-	if(PX4ConnectionFlag) PX4StateTimer = 0.0;
+	
+	if(PX4ConnectionFlag)
+	{
+		PX4StateTimer = 0.0;
+	}
+	
+	if(initializationFlag)
+	{
+		Q_EMIT emit_arming_state( current_state.armed );
+		Q_EMIT emit_flight_mode( current_state.mode.c_str() );
+	}
 }
 
 void QNode::lpe_pose_cb(const geometry_msgs::PoseStamped::ConstPtr &msg)
@@ -201,55 +411,153 @@ void QNode::lpe_twist_cb(const geometry_msgs::TwistStamped::ConstPtr &msg)
 	lpeTwistUpdateFlag = true;
 }
 
-void QNode::sp_cb(const mavros_msgs::PositionTarget::ConstPtr &msg)
-{
-	sp = *msg;
-	spUpdateFlag = true;
-}
-
 void QNode::rp_cb(const mavros_msgs::RollPitchTarget::ConstPtr &msg)
 {
 	rp = *msg;
 	rpUpdateFlag = true;
 }
 
-std::vector<double> QNode::subscribeGains(std::vector<std::string> gainNames, bool &successFlag)
+void QNode::mocap_pos_cb(const geometry_msgs::PoseStamped::ConstPtr &msg)
 {
+	mocap_pos = *msg;
+	mocapPosUpdateFlag = true;
+}
+
+void QNode::mocap_vel_cb(const geometry_msgs::TwistStamped::ConstPtr &msg)
+{
+	mocap_vel = *msg;
+	mocapVelUpdateFlag = true;
+}
+
+void QNode::gps_local_cb(const nav_msgs::Odometry::ConstPtr &msg)
+{
+	gps_local = *msg;
+	gpsLocalUpdateFlag = true;
+}
+
+void QNode::gps_global_cb(const sensor_msgs::NavSatFix::ConstPtr &msg)
+{
+	gps_global = *msg;
+	gpsGlobalUpdateFlag = true;
+}
+
+void QNode::gps_comp_hdg_cb(const std_msgs::Float64::ConstPtr &msg)
+{
+	gps_comp_hdg = *msg;
+	gpsCompHdgUpdateFlag = true;
+}
+
+void QNode::gps_rel_alt_cb(const std_msgs::Float64::ConstPtr &msg)
+{
+	gps_rel_alt = *msg;
+	gpsRelAltUpdateFlag = true;
+}
+
+void QNode::gps_raw_vel_cb(const geometry_msgs::TwistStamped::ConstPtr &msg)
+{
+	gps_raw_vel = *msg;
+	gpsRawVelUpdateFlag = true;
+}
+
+void QNode::initializeSetpoint()
+{
+	sp.coordinate_frame = sp.FRAME_LOCAL_NED;
+	sp.header.frame_id = "fcu";
+	sp.type_mask = sp.IGNORE_AFX | sp.IGNORE_AFY | sp.IGNORE_AFZ;
+	//sp.type_mask = sp.IGNORE_PZ | sp.IGNORE_AFX | sp.IGNORE_AFY | sp.IGNORE_AFZ;
+
+	// position sp mode
+	sp.position = lpe_pose.pose.position;
+	sp.velocity.x = 0.0;
+	sp.velocity.y = 0.0;
+	sp.velocity.z = 0.0;
+	sp.acceleration_or_force.x = 0.0;
+	sp.acceleration_or_force.y = 0.0;
+	sp.acceleration_or_force.z = 0.0;
+	sp.yaw = -90.0*(3.14/180.0);
+	//sp.yaw = 0.0;
+
+	spInitializedFlag = true;
+}
+
+bool QNode::subscribeGains(const std::vector<std::string> gainNames, 
+						   const std::vector<std::string> gainTypes,
+						   std::vector<double>& gainValues)
+{
+	gainValues.clear();
+
 	if(initializationFlag)
 	{
-		successFlag = true;
-		
-		std::vector<double> _values;
-
 		for(unsigned int i=0; i<gainNames.size(); i++)
 		{
-			double gain = getGain(gainNames[i]);
-			if(gain==99.0f) successFlag = false;
-				_values.push_back( gain );
+			if( strcmp( gainTypes[i].c_str(), "double" ) ) // integer type
+			{
+				int _value;
+				if( getGain(gainNames[i], _value) ) 
+				{
+					gainValues.push_back( (double)_value );
+				}
+			}
+			else // double type
+			{
+				double _value;
+				if( getGain(gainNames[i], _value) ) 
+				{
+					gainValues.push_back( _value );
+				}
+
+			}
 		}
 
-		if(successFlag) log("Gain get finished");
-		else log("Gain get failed");
-		return _values;
+		if( gainValues.size() == gainNames.size() ) 
+		{
+			log("Gain get finished");
+			return true;
+		}
+		else
+		{
+			log("Gain get failed");
+			return false;
+		}
 	}
 	else
 	{
 		log("Connect both ROS and PX4 first");
-		successFlag = false;
-		std::vector<double> empty;
-		return empty;
+		return false;
 	}
 }
 
-double QNode::getGain(std::string gainName)
+bool QNode::getGain(std::string gainName, double& value)
 {
-	paramget_srv.request.param_id = gainName;
-	get_gain_client.call(paramget_srv);
-	if(paramget_srv.response.success) return (double)paramget_srv.response.value.real;
-	else return 99.0;
+	mavros_msgs::ParamGet param; 
+	param.request.param_id = gainName;
+	get_gain_client.call( param );
+	if(param.response.success)
+	{
+		value = (double)param.response.value.real;
+		return true;
+	}
+	else
+		return false;
 } 
 
-bool QNode::publishGains(std::vector<std::string> gainNames, std::vector<double> gainValues)
+bool QNode::getGain(std::string gainName, int& value)
+{
+	mavros_msgs::ParamGet param; 
+	param.request.param_id = gainName;
+	get_gain_client.call( param );
+	if(param.response.success)
+	{
+		value = (int)param.response.value.integer;
+		return true;
+	}
+	else
+		return false;
+} 
+
+bool QNode::publishGains(const std::vector<std::string> gainNames, 
+						const std::vector<std::string> gainTypes,
+						const std::vector<double> gainValues)
 {
 	if(initializationFlag)
 	{
@@ -257,7 +565,10 @@ bool QNode::publishGains(std::vector<std::string> gainNames, std::vector<double>
 		
 		for(unsigned int i=0; i<gainNames.size(); i++)
 		{
-			successFlag &= setGain(gainNames[i],gainValues[i]);
+			if( strcmp(gainTypes[i].c_str(), "double") ) // integer
+				successFlag &= setGain(gainNames[i], (int)gainValues[i]);
+			else
+				successFlag &= setGain(gainNames[i], gainValues[i]);
 		}
 
 		if(successFlag)
@@ -276,11 +587,36 @@ bool QNode::publishGains(std::vector<std::string> gainNames, std::vector<double>
 
 bool QNode::setGain(std::string gainName, double gainValue)
 {
-	paramset_srv.request.param_id 		= gainName;
-	paramset_srv.request.value.real 	= (float)gainValue;
-	set_gain_client.call(paramset_srv);
-	if(paramset_srv.response.success) return true;
-	else return false;
+	mavros_msgs::ParamSet param;
+	param.request.param_id 		= gainName;
+	param.request.value.real 	= (float)gainValue;
+	set_gain_client.call( param );
+	if(param.response.success) 
+		return true;
+	else 
+		return false;
+}
+
+bool QNode::setGain(std::string gainName, int gainValue)
+{
+	mavros_msgs::ParamSet param;
+	param.request.param_id 		= gainName;
+	param.request.value.integer = gainValue;
+	set_gain_client.call( param );
+	if(param.response.success) 
+		return true;
+	else 
+		return false;
+}
+
+void setSpMaskPxy(bool tf)
+{
+	if(tf)
+	{
+	}
+	else
+	{
+	}
 }
 
 void q2e(const double q0, const double q1, const double q2, const double q3, 

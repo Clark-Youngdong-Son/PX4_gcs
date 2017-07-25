@@ -11,8 +11,13 @@ DrawingModule::DrawingModule(QCustomPlot* _widget)
 	// grapth setting (temporal)
 	widget->addGraph();
 	widget->graph(0)->setPen(QPen(QColor(40,110,255)));
+	//widget->graph(0)->pen().setWidth(10);
 	widget->addGraph();
 	widget->graph(1)->setPen(QPen(QColor(255,110,40)));
+	//widget->graph(1)->pen().setWidth(10);
+	widget->addGraph();
+	widget->graph(2)->setPen(QPen(QColor(0,0,0)));
+
 	widget->yAxis->setSubTicks(false);
 	widget->xAxis->setRange(0, 4);
 

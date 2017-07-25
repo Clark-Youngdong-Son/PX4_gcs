@@ -7,27 +7,26 @@ namespace px4_gcs
 
 ParameterModule::ParameterModule()
 { 
-	blank = "                    ";
 	widgets.clear();
+	headers.clear();
+	names.clear();
+	types.clear();
 }
 
 ParameterModule::~ParameterModule()
 {
 	widgets.clear();
-}
-
-void ParameterModule::add_widget( QTableWidget* _widget )
-{	
-	QStringList labels;
-	for(int i=0; i<20; i++)
-		labels << blank.c_str();
-	
-	_widget->setVerticalHeaderLabels(labels);
-	widgets.push_back( _widget );
+	headers.clear();
+	names.clear();
+	types.clear();
 }
 
 void ParameterModule::load( string filename )
 {
+	headers.clear();
+	names.clear();
+	types.clear();
+
 	xmlDoc* doc = xmlParseFile( filename.c_str() );
 	xmlNode* top = xmlDocGetRootElement( doc );
 	xmlNode* cur = top->xmlChildrenNode->next;
@@ -36,24 +35,45 @@ void ParameterModule::load( string filename )
 	while( cur != NULL )
 	{
 		xmlNode* child = cur->xmlChildrenNode->next;	
-		
+		widgets[i]->setRowCount( 0 );
+
 		QStringList _header;
 		QStringList _name;
+		QStringList _type;
+
 		int j = 0;
 		while( child != NULL )
 		{
+			// name of node
 			_name << (const char*)child->name;
+			
+			//if( j+1 > widgets[i]->rowCount() )
+			widgets[i]->insertRow( widgets[i]->rowCount() );
+
+			// type
+			xmlNode* sub = child->xmlChildrenNode->next;
+			_type << (const char*)xmlNodeGetContent(sub);
 
 			// description
-			xmlNode* sub = child->xmlChildrenNode->next;
+			sub = sub->next->next;
 			_header << (const char*)xmlNodeGetContent(sub);
 	
 			// value
 			sub = sub->next->next;
-			double _value = strtod((const char*)xmlNodeGetContent(sub), NULL);
-			QTableWidgetItem* tmp 
-				= new QTableWidgetItem( QString::number(_value,'f',2), 0 );
-			widgets[i]->setItem(j,1,tmp);
+			if( strcmp(_type[j].toStdString().c_str(), "double") ) 
+			{
+				long int _value = strtol((const char*)xmlNodeGetContent(sub), NULL, 10);
+				QTableWidgetItem* tmp 
+					= new QTableWidgetItem( QString::number(_value), 0 );
+				widgets[i]->setItem(j,1,tmp);
+			}
+			else
+			{
+				double _value = strtod((const char*)xmlNodeGetContent(sub), NULL);
+				QTableWidgetItem* tmp 
+					= new QTableWidgetItem( QString::number(_value,'f',4), 0 );
+				widgets[i]->setItem(j,1,tmp);
+			}
 
 			child = child->next->next;
 			j++;
@@ -61,6 +81,7 @@ void ParameterModule::load( string filename )
 		widgets[i]->setVerticalHeaderLabels( _header );
 		names.push_back( _name );
 		headers.push_back( _header );
+		types.push_back( _type );
 
 		cur = cur->next->next;
 		i++;
@@ -84,14 +105,18 @@ void ParameterModule::save( string filename )
 		for(unsigned int j=0; j<names[i].length(); j++)
 		{
 			xmlNode* _name = xmlNewNode(NULL, (xmlChar*)names[i][j].toStdString().c_str());
+			xmlNode* _type = xmlNewNode(NULL, (xmlChar*)"type");
 			xmlNode* _description = xmlNewNode(NULL, (xmlChar*)"description");
 			xmlNode* _value = xmlNewNode(NULL, (xmlChar*)"value");
+			
 			
 			ostringstream value_ss;
 			value_ss << widgets[i]->item(j,1)->text().toStdString();
 			xmlNodeSetContent(_description, (xmlChar*)headers[i][j].toStdString().c_str());
 			xmlNodeSetContent(_value, (xmlChar*)value_ss.str().c_str());
+			xmlNodeSetContent(_type, (xmlChar*)types[i][j].toStdString().c_str());
 
+			xmlAddChild( _name, _type );
 			xmlAddChild( _name, _description );
 			xmlAddChild( _name, _value );
 			xmlAddChild( _tbl, _name );
@@ -109,49 +134,37 @@ void ParameterModule::update_fcu_values( vector<string> _name, vector<double> _v
 	for(unsigned int i=0; i<_name.size(); i++)
 	{
 		QString tmp_name = QString( _name[i].c_str() );
-		for(unsigned int j=0; j<names.size(); j++)
+		for(unsigned int j=0; j<names.size(); j++) // j : table idx
 		{
-			int idx = names[j].indexOf(tmp_name);
+			int idx = names[j].indexOf(tmp_name); // idx : row of table
 			if( idx != -1 )
 			{
 				// in this case, name found.
-				QTableWidgetItem* tmp 
-					= new QTableWidgetItem( QString::number(_value[i],'f',2), 0 );
-				widgets[j]->setItem(idx,0,tmp);
-			}
-		}
-	}
-}
-
-void ParameterModule::query_names( vector<string>& empty )
-{
-	empty.clear();
-	for( unsigned int i=0; i<headers.size(); i++)
-	{
-		for( unsigned int j=0; j<headers[i].length(); j++)
-		{
-			// first check any data in FCU column
-			if( widgets[i]->item(j,0) == NULL ) // it means there is no data
-			{
-				// so add to query name
-				empty.push_back( names[i][j].toStdString() );
-			}
-			else
-			{
-				if( strcmp(widgets[i]->item(j,0)->text().toStdString().c_str(), 
-							widgets[i]->item(j,1)->text().toStdString().c_str()) )
+				if( strcmp(types[j][idx].toStdString().c_str(), "double") )
 				{
-					// it means, FCU and GCS values are different, so add to query name
-					empty.push_back( names[i][j].toStdString() );
+					QTableWidgetItem* tmp 
+						= new QTableWidgetItem( QString::number(_value[i]), 0 );
+					widgets[j]->setItem(idx,0,tmp);
+				}
+				else
+				{
+					QTableWidgetItem* tmp 
+						= new QTableWidgetItem( QString::number(_value[i],'f',4), 0 );
+					widgets[j]->setItem(idx,0,tmp);
 				}
 			}
 		}
 	}
 }
 
-void ParameterModule::query_gcs_values( vector<string>& _name, vector<double>& _value )
+void ParameterModule::query_list(vector<string>& _names, 
+								vector<string>& _types, 
+								vector<double>& _values)
 {
-	_name.clear(); _value.clear();
+	_names.clear();
+	_types.clear();
+	_values.clear();
+
 	for( unsigned int i=0; i<headers.size(); i++)
 	{
 		for( unsigned int j=0; j<headers[i].length(); j++)
@@ -160,8 +173,9 @@ void ParameterModule::query_gcs_values( vector<string>& _name, vector<double>& _
 			if( widgets[i]->item(j,0) == NULL ) // it means there is no data
 			{
 				// so add to query name
-				_name.push_back( names[i][j].toStdString() );
-				_value.push_back( widgets[i]->item(j,1)->text().toDouble() );
+				_names.push_back( names[i][j].toStdString() );
+				_types.push_back( types[i][j].toStdString() );
+				_values.push_back( widgets[i]->item(j,1)->text().toDouble() );
 			}
 			else
 			{
@@ -169,8 +183,9 @@ void ParameterModule::query_gcs_values( vector<string>& _name, vector<double>& _
 							widgets[i]->item(j,1)->text().toStdString().c_str()) )
 				{
 					// it means, FCU and GCS values are different, so add to query name
-					_name.push_back( names[i][j].toStdString() );
-					_value.push_back( widgets[i]->item(j,1)->text().toDouble() );
+					_names.push_back( names[i][j].toStdString() );
+					_types.push_back( types[i][j].toStdString() );
+					_values.push_back( widgets[i]->item(j,1)->text().toDouble() );
 				}
 			}
 		}
