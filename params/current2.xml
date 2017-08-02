@@ -4,7 +4,7 @@
     <MPC_XY_P>
       <type>double</type>
       <description>XY_P</description>
-      <value>1.5000</value>
+      <value>1.0000</value>
     </MPC_XY_P>
     <MPC_Z_P>
       <type>double</type>
@@ -14,7 +14,7 @@
     <MPC_XY_VEL_P>
       <type>double</type>
       <description>XY_D</description>
-      <value>0.8000</value>
+      <value>0.4000</value>
     </MPC_XY_VEL_P>
     <MPC_Z_VEL_P>
       <type>double</type>
@@ -86,17 +86,17 @@
     <LPE_FUSION>
       <type>int</type>
       <description>Method</description>
-      <value>129</value>
+      <value>1</value>
     </LPE_FUSION>
     <LPE_PN_P>
       <type>double</type>
       <description>Pos_prop</description>
-      <value>0.1000</value>
+      <value>0.0500</value>
     </LPE_PN_P>
     <LPE_PN_V>
       <type>double</type>
       <description>Vel_prop</description>
-      <value>0.0100</value>
+      <value>0.0050</value>
     </LPE_PN_V>
     <LPE_PN_B>
       <type>double</type>
@@ -121,7 +121,7 @@
     <LPE_GPS_XY>
       <type>double</type>
       <description>GPS_XY_N</description>
-      <value>500.0000</value>
+      <value>1000.0000</value>
     </LPE_GPS_XY>
     <LPE_GPS_Z>
       <type>double</type>
@@ -131,7 +131,7 @@
     <LPE_GPS_VXY>
       <type>double</type>
       <description>GPS_VXY_N</description>
-      <value>1.0000</value>
+      <value>0.2500</value>
     </LPE_GPS_VXY>
     <LPE_GPS_VZ>
       <type>double</type>
@@ -141,7 +141,7 @@
     <LPE_LON>
       <type>double</type>
       <description>Lon_origin</description>
-      <value>126.9500</value>
+      <value>126.9507</value>
     </LPE_LON>
     <LPE_LAT>
       <type>double</type>

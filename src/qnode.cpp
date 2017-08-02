@@ -314,7 +314,7 @@ void QNode::run()
 			{
 				double x = gps_local.pose.pose.position.x;	
 				double y = gps_local.pose.pose.position.y;	
-				double z = gps_local.pose.pose.position.x;	
+				double z = gps_local.pose.pose.position.z;	
 				double vx = gps_local.twist.twist.linear.x;	
 				double vy = gps_local.twist.twist.linear.y;	
 				double vz = gps_local.twist.twist.linear.z;	
