@@ -39,6 +39,7 @@ class ICSL_GCS : public QMainWindow
 		void set_sp_position_data(double,double,double,double);
 		void set_sp_velocity_data(double,double,double,double);
 		void set_rp_target_data(double,double,double);
+		void set_pqr_target_data(double,double,double,double);
 		void set_arming_state(bool);
 		void set_flight_mode(const char*);
 		void set_gps_local(double,double,double,double,double,double,double);
@@ -70,6 +71,8 @@ class ICSL_GCS : public QMainWindow
 		//void on_btn_Z_pressed(){ qnode.setArm(); }
 		//void on_btn_Space_pressed(){ qnode.setDisarm(); }
 		//void on_btn_X_pressed(){ qnode.setOffboard(); }
+		void on_btn_M_pressed(){ qnode.mpcSetting(true); }
+		void on_btn_Comma_pressed(){ qnode.mpcSetting(false); }
 
 	private:
 		Ui::ICSL_GCS ui;

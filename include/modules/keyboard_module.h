@@ -33,6 +33,8 @@ class KeyboardModule : public Module
 		QShortcut* key7;
 		QShortcut* key8;
 		QShortcut* key9;
+		QShortcut* key10;
+		QShortcut* key11;
 };
 
 } // namespace px4_gcs

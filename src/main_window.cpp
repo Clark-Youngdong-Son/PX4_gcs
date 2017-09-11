@@ -48,6 +48,8 @@ ICSL_GCS::ICSL_GCS(int argc, char** argv, QWidget *parent)
 					this, SLOT(set_sp_velocity_data(double,double,double,double))); 
 	QObject::connect(&qnode, SIGNAL(emit_rp_target_data(double,double,double)), 
 					this, SLOT(set_rp_target_data(double,double,double))); 
+	QObject::connect(&qnode, SIGNAL(emit_pqr_target_data(double,double,double,double)), 
+					this, SLOT(set_pqr_target_data(double,double,double,double))); 
 
 	QObject::connect(&qnode, SIGNAL(emit_arming_state(bool)), 
 					this, SLOT(set_arming_state(bool)));
@@ -166,15 +168,22 @@ void ICSL_GCS::set_sp_position_data(double x, double y, double z, double t)
 
 void ICSL_GCS::set_sp_velocity_data(double x, double y, double z, double t)
 {
-//	graph[3]->draw(t, x, 1);
-//	graph[4]->draw(t, y, 1);
-//	graph[5]->draw(t, z, 1);
+	graph[3]->draw(t, x, 1);
+	graph[4]->draw(t, y, 1);
+	graph[5]->draw(t, z, 1);
 }
 
 void ICSL_GCS::set_rp_target_data(double r_t, double p_t, double t)
 {
 	graph[6]->draw(t, r_t, 1);
 	graph[7]->draw(t, p_t, 1);
+}
+
+void ICSL_GCS::set_pqr_target_data(double p_t, double q_t, double r_t, double t)
+{
+	graph[9]->draw(t, p_t, 1);
+	graph[10]->draw(t, -q_t, 1);
+	graph[11]->draw(t, -r_t, 1);
 }
 
 void ICSL_GCS::set_arming_state(bool armed)
@@ -376,15 +385,15 @@ void ICSL_GCS::setupGraph()
 
 	graph[3] = new DrawingModule( ui.widget_v_x );
 	graph[3]->setMargin(0.1);
-	graph[3]->setYLims(-0.5, 0.5);
+	graph[3]->setYLims(-2.5, 2.5);
 	
 	graph[4] = new DrawingModule( ui.widget_v_y );
 	graph[4]->setMargin(0.1);
-	graph[4]->setYLims(-0.5, 0.5);
+	graph[4]->setYLims(-2.5, 2.5);
 	
 	graph[5] = new DrawingModule( ui.widget_v_z );
 	graph[5]->setMargin(0.1);
-	graph[5]->setYLims(-0.5, 0.5);
+	graph[5]->setYLims(-2.5, 2.5);
 	
 	graph[6] = new DrawingModule( ui.widget_roll );
 	graph[6]->setMargin(2.0);

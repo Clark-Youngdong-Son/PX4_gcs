@@ -11,6 +11,7 @@
 #include <mavros_msgs/ParamSet.h>
 #include <mavros_msgs/PositionTarget.h>
 #include <mavros_msgs/RollPitchTarget.h>
+#include <mavros_msgs/AttitudeTarget.h>
 #include <mavros_msgs/CommandBool.h>
 #include <mavros_msgs/SetMode.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -21,6 +22,8 @@
 #include <std_msgs/String.h>
 #include <std_msgs/Bool.h>
 #include <std_msgs/Float64.h>
+
+#include <keyboard/Key.h>
 
 #define PX4_LOSS_TIME 2.0
 
@@ -56,6 +59,7 @@ public:
 	void moveBackward(){ spInitializedFlag ? sp.position.x -= 0.2 : sp.position.x -= 0.0; }
 	void increaseHeightVel(){ spInitializedFlag ? sp.velocity.z += 0.1 : sp.velocity.z += 0.0; }
 	void decreaseHeightVel(){ spInitializedFlag ? sp.velocity.z -= 0.1 : sp.velocity.z -= 0.0; }
+	void mpcSetting(bool);
 
 Q_SIGNALS:
     void rosShutdown();
@@ -70,6 +74,7 @@ Q_SIGNALS:
 	void emit_sp_position_data(double,double,double,double);
 	void emit_sp_velocity_data(double,double,double,double);
 	void emit_rp_target_data(double,double,double);
+	void emit_pqr_target_data(double,double,double,double);
 	void emit_mocap_position_data(double,double,double,double);
 	void emit_mocap_linear_velocity_data(double,double,double,double);
 	void emit_mocap_attitude_data(double,double,double,double);
@@ -103,6 +108,8 @@ private:
 	ros::Subscriber gps_comp_hdg_subscriber;	// compass heading
 	ros::Subscriber gps_rel_alt_subscriber; 	// relative altitude
 	ros::Subscriber gps_raw_vel_subscriber; 	// gps raw velocity
+	ros::Subscriber mpc_sp_subscriber; 	        // setpoint from mpc
+	ros::Subscriber mpc_sp_subscriber2;
 	void state_cb(const mavros_msgs::State::ConstPtr &);
 	void lpe_pose_cb(const geometry_msgs::PoseStamped::ConstPtr &);
 	void lpe_twist_cb(const geometry_msgs::TwistStamped::ConstPtr &);
@@ -114,6 +121,8 @@ private:
 	void gps_comp_hdg_cb(const std_msgs::Float64::ConstPtr &);
 	void gps_rel_alt_cb(const std_msgs::Float64::ConstPtr &);
 	void gps_raw_vel_cb(const geometry_msgs::TwistStamped::ConstPtr &);
+	void mpc_sp_cb(const mavros_msgs::PositionTarget::ConstPtr &);
+	void mpc_sp_cb2(const mavros_msgs::AttitudeTarget::ConstPtr &);
 	mavros_msgs::State current_state;
 	geometry_msgs::PoseStamped lpe_pose;
 	geometry_msgs::TwistStamped lpe_twist;
@@ -135,9 +144,11 @@ private:
 	bool gpsCompHdgUpdateFlag;
 	bool gpsRelAltUpdateFlag;
 	bool gpsRawVelUpdateFlag;
+	bool mpcStartFlag;
 
 	/** publisher **/
 	ros::Publisher sp_publisher;			// setpoint raw
+	ros::Publisher mpc_publisher;			// mpc
 	mavros_msgs::PositionTarget sp;
 	bool spInitializedFlag;
 	

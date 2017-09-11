@@ -20,7 +20,8 @@ QNode::QNode(int argc, char** argv ) :
 	gpsCompHdgUpdateFlag(false),
 	gpsRelAltUpdateFlag(false),
 	gpsRawVelUpdateFlag(false),
-	spInitializedFlag(false)
+	spInitializedFlag(false),
+	mpcStartFlag(false)
 	{}
 
 QNode::~QNode() 
@@ -76,10 +77,16 @@ bool QNode::init()
 			("mavros/global_position/rel_alt", 1, &QNode::gps_rel_alt_cb, this);
 		gps_raw_vel_subscriber = n.subscribe<geometry_msgs::TwistStamped>
 			("mavros/global_position/raw/gps_vel", 1, &QNode::gps_raw_vel_cb, this);
+		mpc_sp_subscriber = n.subscribe<mavros_msgs::PositionTarget>
+			("mavros/setpoint_raw/local", 1, &QNode::mpc_sp_cb, this);
+		mpc_sp_subscriber2 = n.subscribe<mavros_msgs::AttitudeTarget>
+			("mavros/setpoint_raw/attitude", 1, &QNode::mpc_sp_cb2, this);
 
 		// Publication
 		sp_publisher = n.advertise<mavros_msgs::PositionTarget>
 			("mavros/setpoint_raw/local", 1);
+		mpc_publisher = n.advertise<keyboard::Key>
+			("keyboard/keydown", 1);
 
 		// Services
 		get_gain_client = n.serviceClient<mavros_msgs::ParamGet>("mavros/param/get");
@@ -183,6 +190,24 @@ void QNode::setManual()
 		log("Manual mode enabled");
 	else
 		log("Manual mode transition falied");
+}
+
+void QNode::mpcSetting(bool flag)
+{
+	keyboard::Key key_msg;
+	if(flag)
+	{
+		mpcStartFlag = true;
+		key_msg.code = key_msg.KEY_m;
+		mpc_publisher.publish(key_msg);
+	}
+	else
+	{
+		initializeSetpoint();
+		mpcStartFlag = false;
+		key_msg.code = key_msg.KEY_COMMA;
+		mpc_publisher.publish(key_msg);
+	}
 }
 
 bool QNode::connect_px4()
@@ -357,7 +382,7 @@ void QNode::run()
 				gpsRawVelUpdateFlag = false;
 			}
 
-			if(spInitializedFlag)
+			if(spInitializedFlag && !mpcStartFlag)
 			{
 				sp.header.stamp = ros::Time::now();
 				sp_publisher.publish( sp );	
@@ -459,6 +484,45 @@ void QNode::gps_raw_vel_cb(const geometry_msgs::TwistStamped::ConstPtr &msg)
 	gpsRawVelUpdateFlag = true;
 }
 
+void QNode::mpc_sp_cb(const mavros_msgs::PositionTarget::ConstPtr &msg)
+{
+	if(mpcStartFlag)
+	{
+		double x = msg->position.x;
+		double y = msg->position.y;
+		double z = msg->position.z;
+		double vx = msg->velocity.x;
+		double vy = msg->velocity.y;
+		double vz = msg->velocity.z;
+		double t = (ros::Time::now() - t_init).toSec();
+		Q_EMIT emit_sp_position_data(x,y,z,t);
+		Q_EMIT emit_sp_velocity_data(vx,vy,vz,t);
+	}
+}
+
+void QNode::mpc_sp_cb2(const mavros_msgs::AttitudeTarget::ConstPtr &msg)
+{
+	if(mpcStartFlag)
+	{
+		//Attitude quarternion
+//		double q0 = msg->orientation.w;
+//		double q1 = msg->orientation.x;
+//		double q2 = msg->orientation.y;
+//		double q3 = msg->orientation.z;
+//
+//		double roll = atan2(2*(q0*q1 + q2*q3),1-2*(q1*q1+q2*q2));
+//		double pitch = asin(2*(q0*q2-q3*q1));
+//		double yaw = atan2(2*(q0*q3 + q1*q2),1-2*(q2*q2+q3*q3));
+
+		//Attitude rates
+		double p = 180.0/3.14*msg->body_rate.x;
+		double q = 180.0/3.14*msg->body_rate.y;
+		double r = 180.0/3.14*msg->body_rate.z;
+		double t = (ros::Time::now() - t_init).toSec();
+		Q_EMIT emit_pqr_target_data(p,q,r,t);
+	}
+}
+
 void QNode::initializeSetpoint()
 {
 	sp.coordinate_frame = sp.FRAME_LOCAL_NED;
@@ -474,8 +538,8 @@ void QNode::initializeSetpoint()
 	sp.acceleration_or_force.x = 0.0;
 	sp.acceleration_or_force.y = 0.0;
 	sp.acceleration_or_force.z = 0.0;
-	sp.yaw = -90.0*(3.14/180.0);
-	//sp.yaw = 0.0;
+	//sp.yaw = -90.0*(3.14/180.0);
+	sp.yaw = 0.0;
 
 	spInitializedFlag = true;
 }
