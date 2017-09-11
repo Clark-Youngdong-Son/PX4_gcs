@@ -62,10 +62,14 @@ bool QNode::init()
 			("mavros/local_position/velocity", 1, &QNode::lpe_twist_cb, this);
 		rp_subscriber = n.subscribe<mavros_msgs::RollPitchTarget>
 			("mavros/rp_target", 1, &QNode::rp_cb, this);
+//		mocap_pos_subscriber = n.subscribe<geometry_msgs::PoseStamped>
+//			("mavros/mocap/pose", 1, &QNode::mocap_pos_cb, this);
+//		mocap_vel_subscriber = n.subscribe<geometry_msgs::TwistStamped>
+//			("mavros/mocap/twist", 1, &QNode::mocap_vel_cb, this);	
 		mocap_pos_subscriber = n.subscribe<geometry_msgs::PoseStamped>
-			("mavros/mocap/pose", 1, &QNode::mocap_pos_cb, this);
+			("vicon/pose", 1, &QNode::mocap_pos_cb, this);
 		mocap_vel_subscriber = n.subscribe<geometry_msgs::TwistStamped>
-			("mavros/mocap/twist", 1, &QNode::mocap_vel_cb, this);	
+			("vicon/velocity", 1, &QNode::mocap_vel_cb, this);	
 		gps_local_subscriber = n.subscribe<nav_msgs::Odometry>
 			("mavros/global_position/local", 1, &QNode::gps_local_cb, this);
 		gps_global_subscriber = n.subscribe<sensor_msgs::NavSatFix>
@@ -293,7 +297,7 @@ void QNode::run()
 				double t = (ros::Time::now() - t_init).toSec();
 
 				Q_EMIT emit_mocap_position_data(x,y,z,t);
-				//Q_EMIT emit_mocap_attitude_data(roll,pitch,yaw,t);
+				Q_EMIT emit_mocap_attitude_data(roll,pitch,yaw,t);
 				mocapPosUpdateFlag = false;
 			}
 			if(mocapVelUpdateFlag)
@@ -307,7 +311,7 @@ void QNode::run()
 				double t = (ros::Time::now() - t_init).toSec();
 
 				Q_EMIT emit_mocap_linear_velocity_data(vx,vy,vz,t);
-				//Q_EMIT emit_mocap_angular_velocity_data(p,q,r,t);
+				Q_EMIT emit_mocap_angular_velocity_data(p,q,r,t);
 				mocapVelUpdateFlag = false;
 			}
 			if(gpsLocalUpdateFlag)

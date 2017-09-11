@@ -86,7 +86,7 @@
     <LPE_FUSION>
       <type>int</type>
       <description>Method</description>
-      <value>1</value>
+      <value>192</value>
     </LPE_FUSION>
     <LPE_PN_P>
       <type>double</type>
@@ -98,6 +98,11 @@
       <description>Vel_prop</description>
       <value>0.0800</value>
     </LPE_PN_V>
+    <LPE_PN_B>
+      <type>double</type>
+      <description>Acc_prop</description>
+      <value>0.0010</value>
+    </LPE_PN_B>
     <LPE_ACC_XY>
       <type>double</type>
       <description>Acc_XY_N</description>
@@ -136,12 +141,12 @@
     <LPE_LON>
       <type>double</type>
       <description>Lon_origin</description>
-      <value>8.5455</value>
+      <value>126.9507</value>
     </LPE_LON>
     <LPE_LAT>
       <type>double</type>
       <description>Lat_origin</description>
-      <value>47.3977</value>
+      <value>37.4546</value>
     </LPE_LAT>
   </tbl_2>
   <tbl_3>
