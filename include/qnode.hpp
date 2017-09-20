@@ -7,29 +7,49 @@
 #include <QThread>
 
 #include <mavros_msgs/State.h>
-#include <mavros_msgs/ParamGet.h>
-#include <mavros_msgs/ParamSet.h>
+#include <mavros_msgs/RCIn.h>
+#include <mavros_msgs/OverrideRCIn.h>
 #include <mavros_msgs/PositionTarget.h>
-#include <mavros_msgs/RollPitchTarget.h>
+#include <mavros_msgs/AttitudeTarget.h>
 #include <mavros_msgs/CommandBool.h>
 #include <mavros_msgs/SetMode.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/Quaternion.h>
+#include <geometry_msgs/PointStamped.h>
 #include <sensor_msgs/NavSatFix.h>
 #include <nav_msgs/Odometry.h>
 #include <std_msgs/String.h>
 #include <std_msgs/Bool.h>
 #include <std_msgs/Float64.h>
 
+#include <optical_flow/FlowMeasurements.h>
+#include <ublox_msgs/NavRELPOSNED.h>
+#include "control_modes.h"
+
+#include <thread>
+
 #define PX4_LOSS_TIME 2.0
+
+typedef mavros_msgs::State PX4State;
+typedef mavros_msgs::RCIn RCIn;
+typedef mavros_msgs::OverrideRCIn RCOverride;
+typedef mavros_msgs::PositionTarget PosSp;
+typedef mavros_msgs::AttitudeTarget AttSp;
+typedef nav_msgs::Odometry MSFState;
+typedef optical_flow::FlowMeasurements Flow;
+typedef geometry_msgs::PoseWithCovarianceStamped VO;
+typedef ublox_msgs::NavRELPOSNED GPSPos;
+typedef geometry_msgs::PointStamped Lidar;
 
 namespace px4_gcs 
 {
 
 class QNode : public QThread 
 {
-    Q_OBJECT
+
+Q_OBJECT
 public:
 	QNode(int argc, char** argv );
 	virtual ~QNode();
@@ -38,130 +58,77 @@ public:
 
 	//MAVROS
 	bool connect_px4();
-	bool subscribeGains(const std::vector<std::string>, const std::vector<std::string>, 
-						std::vector<double>& );
-	bool publishGains(const std::vector<std::string>, const std::vector<std::string>,
-						const std::vector<double>);
-
+	void set_arm(); 
+	void set_disarm();
+	void set_offboard();
+	void set_manual();
+	void set_ctrl_mode( ControlModes mode );
+	
 	// Keyboard interaction
-	void setArm(); 
-	void setDisarm();
-	void setOffboard();
-	void setManual();
-	void increaseHeight(){ spInitializedFlag ? sp.position.z += 0.2 : sp.position.z += 0.0; }
-	void decreaseHeight(){ spInitializedFlag ? sp.position.z -= 0.2 : sp.position.z -= 0.0; }
-	void moveLeft(){ spInitializedFlag ? sp.position.y += 0.2 : sp.position.y += 0.0; }
-	void moveRight(){ spInitializedFlag ? sp.position.y -= 0.2 : sp.position.y -= 0.0; }
-	void moveForward(){ spInitializedFlag ? sp.position.x += 0.2 : sp.position.x += 0.0; }
-	void moveBackward(){ spInitializedFlag ? sp.position.x -= 0.2 : sp.position.x -= 0.0; }
-	void increaseHeightVel(){ spInitializedFlag ? sp.velocity.z += 0.1 : sp.velocity.z += 0.0; }
-	void decreaseHeightVel(){ spInitializedFlag ? sp.velocity.z -= 0.1 : sp.velocity.z -= 0.0; }
+	void move_setpoint(int, bool);
+	void emergency_stop();
 
 Q_SIGNALS:
-    void rosShutdown();
+    // quit
+	void ros_shutdown();
+	
+	// mavros
 	void emit_pushButton_connect_ros_color(bool);
 	void emit_pushButton_connect_px4_color(bool);
-	void emit_initialization();
-	void emit_log_message(const std::string&);
-	void emit_lpe_position_data(double,double,double,double);
-	void emit_lpe_linear_velocity_data(double,double,double,double);
-	void emit_lpe_attitude_data(double,double,double,double);
-	void emit_lpe_angular_velocity_data(double,double,double,double);
-	void emit_sp_position_data(double,double,double,double);
-	void emit_sp_velocity_data(double,double,double,double);
-	void emit_rp_target_data(double,double,double);
-	void emit_mocap_position_data(double,double,double,double);
-	void emit_mocap_linear_velocity_data(double,double,double,double);
-	void emit_mocap_attitude_data(double,double,double,double);
-	void emit_mocap_angular_velocity_data(double,double,double,double);
 	void emit_arming_state(bool);
 	void emit_flight_mode( const char* );
-	void emit_gps_local(double,double,double,double,double,double,double);
-	void emit_gps_global(double,double,double,int,int,double);
-	void emit_gps_comp_hdg(double,double);
-	void emit_gps_rel_alt(double,double);
-	void emit_gps_raw_vel(double,double,double,double);
+	void emit_msf_state(double*);
+	void emit_position_setpoint(double*, int, bool);
+	void emit_attitude_setpoint(double*);
+	void emit_flow_measurements(double*);
+	void emit_vo_measurements(double*);
+	void emit_gps_pos_measurements(double*);
+	void emit_lidar_measurements(double*);
+	void emit_kill_switch_enabled(bool);
 
 private:
 	int init_argc;
 	char** init_argv;
-	void log(const std::string &msg){ Q_EMIT emit_log_message( msg ); }
-	double now(){ return (ros::Time::now() - t_init).toSec(); }
+	double now(){ return (ros::Time::now() - t_init_).toSec(); }
 
-	//MAVROS
-	ros::Time t_init;
+	ros::Time t_init_;
 	
 	/** subscriber and callbacks **/
-	ros::Subscriber state_subscriber; 			// connection status
-	ros::Subscriber	lpe_pose_subscriber; 		// LPE state (6dof pose)
-	ros::Subscriber	lpe_twist_subscriber; 		// LPE state (6dof twist)
-	ros::Subscriber rp_subscriber;				// desired roll/pitch angles
-	ros::Subscriber mocap_pos_subscriber;		// vicon position
-	ros::Subscriber mocap_vel_subscriber;		// vicon velocity
-	ros::Subscriber gps_local_subscriber;		// gps in local coordinate
-	ros::Subscriber gps_global_subscriber;		// gps global (lat, lon, alt)
-	ros::Subscriber gps_comp_hdg_subscriber;	// compass heading
-	ros::Subscriber gps_rel_alt_subscriber; 	// relative altitude
-	ros::Subscriber gps_raw_vel_subscriber; 	// gps raw velocity
-	void state_cb(const mavros_msgs::State::ConstPtr &);
-	void lpe_pose_cb(const geometry_msgs::PoseStamped::ConstPtr &);
-	void lpe_twist_cb(const geometry_msgs::TwistStamped::ConstPtr &);
-	void rp_cb(const mavros_msgs::RollPitchTarget::ConstPtr &);
-	void mocap_pos_cb(const geometry_msgs::PoseStamped::ConstPtr &);
-	void mocap_vel_cb(const geometry_msgs::TwistStamped::ConstPtr &);
-	void gps_local_cb(const nav_msgs::Odometry::ConstPtr &);
-	void gps_global_cb(const sensor_msgs::NavSatFix::ConstPtr &);
-	void gps_comp_hdg_cb(const std_msgs::Float64::ConstPtr &);
-	void gps_rel_alt_cb(const std_msgs::Float64::ConstPtr &);
-	void gps_raw_vel_cb(const geometry_msgs::TwistStamped::ConstPtr &);
-	mavros_msgs::State current_state;
-	geometry_msgs::PoseStamped lpe_pose;
-	geometry_msgs::TwistStamped lpe_twist;
-	mavros_msgs::RollPitchTarget rp;
-	geometry_msgs::PoseStamped mocap_pos;
-	geometry_msgs::TwistStamped mocap_vel;
-	nav_msgs::Odometry gps_local;
-	sensor_msgs::NavSatFix gps_global;
-	std_msgs::Float64 gps_comp_hdg;
-	std_msgs::Float64 gps_rel_alt;
-	geometry_msgs::TwistStamped gps_raw_vel;
-	bool lpePoseUpdateFlag;
-	bool lpeTwistUpdateFlag;
-	bool rpUpdateFlag;
-	bool mocapPosUpdateFlag;
-	bool mocapVelUpdateFlag;
-	bool gpsLocalUpdateFlag;
-	bool gpsGlobalUpdateFlag;
-	bool gpsCompHdgUpdateFlag;
-	bool gpsRelAltUpdateFlag;
-	bool gpsRawVelUpdateFlag;
+	ros::Subscriber sub_[8];
+	void px4_state_cb(const PX4State::ConstPtr &);
+	void rc_in_cb(const RCIn::ConstPtr &);
+	void att_sp_cb(const AttSp::ConstPtr &);
+	void msf_state_cb(const MSFState::ConstPtr &);
+	void flow_cb(const Flow::ConstPtr &);
+	void vo_cb(const VO::ConstPtr &);
+	void gps_pos_cb(const GPSPos::ConstPtr &);
+	void lidar_cb(const Lidar::ConstPtr &);
+	PX4State px4_state_;
+	MSFState msf_state_;
 
 	/** publisher **/
-	ros::Publisher sp_publisher;			// setpoint raw
-	mavros_msgs::PositionTarget sp;
-	bool spInitializedFlag;
+	ros::Publisher pub_[2];
+	PosSp pos_sp_;
 	
 	/** service client **/
-	ros::ServiceClient get_gain_client;		// get gain of FCU
-	ros::ServiceClient set_gain_client;		// set gain with GCS value
-	ros::ServiceClient arming_client;		// arm/disarm
+	ros::ServiceClient arming_client;
 	ros::ServiceClient set_mode_client;
-	mavros_msgs::ParamSet paramset_srv;
 	mavros_msgs::CommandBool arm_cmd;
 
-	bool initializationFlag;
-	bool ROSConnectionFlag, ROSDisconnectionFlag;
-	bool PX4ConnectionFlag, PX4DisconnectionFlag;
-	double PX4StateTimer;
+	/** flags **/
+	bool init_flag_;
+	bool ros_flag_;
+	bool px4_flag_;
+	bool px4_signal_loss_;
+	bool init_pos_sp_;
+	double px4_timer_;
+	bool emergency_stop_;
 
-	void initializeSetpoint();
-	bool getGain(std::string, double&);
-	bool getGain(std::string, int&);
-	bool setGain(std::string, double);
-	bool setGain(std::string, int);
-	void setSpMaskPxy(bool);
+	void initialize_pos_setpoint();
+	void override_kill_switch();
 };
 
+// utility functions
 void q2e(const double, const double, const double, const double, double&, double&, double&);
 void q2e(const geometry_msgs::Quaternion, double&, double&, double&);
 

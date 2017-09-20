@@ -15,7 +15,7 @@ class LoggingModule : public Module
 	public:
 		LoggingModule(QListView* _widget);
 		~LoggingModule();
-		void log( const std::string );
+		void log( const std::string& );
 
 	private:
 		QListView* widget;

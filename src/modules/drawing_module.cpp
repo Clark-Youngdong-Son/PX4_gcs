@@ -43,7 +43,7 @@ void DrawingModule::setYLims(double _min, double _max)
 	lim[0] = _min;
 	lim[1] = _max;
 	height = lim[1] - lim[0];
-
+	margin = (_max - _min)*0.1;
 	widget->yAxis->setRange(lim[0], lim[1]);
 }
 

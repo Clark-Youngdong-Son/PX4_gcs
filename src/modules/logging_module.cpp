@@ -19,7 +19,7 @@ LoggingModule::~LoggingModule()
 	delete model;
 }
 
-void LoggingModule::log( const std::string msg )
+void LoggingModule::log( const std::string& msg )
 {
 	QVariant new_row( QString(msg.c_str()) );
 
