@@ -31,7 +31,7 @@ class ICSL_GCS : public QMainWindow
 		void set_flight_mode(const char*);
 		void set_msf_state(double*);
 		void set_position_setpoint(double*, int, bool);
-		void set_attitude_setpoint(double*);
+		void set_attitude_setpoint(double*, bool);
 		void set_flow_measurements(double*);
 		void set_vo_measurements(double*);
 		void set_gps_pos_measurements(double*);

@@ -28,8 +28,8 @@ ICSL_GCS::ICSL_GCS(int argc, char** argv, QWidget *parent)
 						  this, SLOT(set_msf_state(double*))); 
 	QObject::connect(&qnode, SIGNAL(emit_position_setpoint(double*, int, bool)), 
 						  this, SLOT(set_position_setpoint(double*, int, bool))); 
-	QObject::connect(&qnode, SIGNAL(emit_attitude_setpoint(double*)), 
-						  this, SLOT(set_attitude_setpoint(double*))); 
+	QObject::connect(&qnode, SIGNAL(emit_attitude_setpoint(double*, bool)), 
+						  this, SLOT(set_attitude_setpoint(double*, bool))); 
 	QObject::connect(&qnode, SIGNAL(emit_flow_measurements(double*)), 
 						  this, SLOT(set_flow_measurements(double*))); 
 	QObject::connect(&qnode, SIGNAL(emit_vo_measurements(double*)), 
@@ -246,13 +246,16 @@ void ICSL_GCS::set_position_setpoint(double* buf, int mode, bool throttle)
 	}
 }
 
-void ICSL_GCS::set_attitude_setpoint(double* buf)
+void ICSL_GCS::set_attitude_setpoint(double* buf, bool throttle)
 {
-	graph[6] ->draw(buf[0], buf[1], 1); // roll
-	graph[7] ->draw(buf[0], buf[2], 1); // pitch
-	graph[9] ->draw(buf[0], buf[3], 1); // wx
-	graph[10]->draw(buf[0], buf[4], 1); // wy
-	graph[11]->draw(buf[0], buf[5], 1); // wz
+	if( throttle )
+	{
+		graph[6] ->draw(buf[0], buf[1], 1); // roll
+		graph[7] ->draw(buf[0], buf[2], 1); // pitch
+		graph[9] ->draw(buf[0], buf[3], 1); // wx
+		graph[10]->draw(buf[0], buf[4], 1); // wy
+		graph[11]->draw(buf[0], buf[5], 1); // wz
+	}
 }
 
 void ICSL_GCS::set_flow_measurements(double* buf)

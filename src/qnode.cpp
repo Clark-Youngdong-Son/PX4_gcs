@@ -49,12 +49,12 @@ bool QNode::init()
 		sub_[2] = n.subscribe<AttSp>("mavros/setpoint_raw/attitude",10,&QNode::att_sp_cb,this);
 		sub_[3] = n.subscribe<MSFState>("msf_core/odometry",10,&QNode::msf_state_cb,this);
 		sub_[4] = n.subscribe<Flow>("optical_flow/measurements",10,&QNode::flow_cb,this);
-		sub_[5] = n.subscribe<VO>("svo/pose",10,&QNode::vo_cb,this);
+		sub_[5] = n.subscribe<VO>("rovio/pose_with_covariance_stamped",10,&QNode::vo_cb,this);
 		sub_[6] = n.subscribe<GPSPos>("ublox_rover/navrelposned",10,&QNode::gps_pos_cb,this);
 		sub_[7] = n.subscribe<Lidar>("mavros/distance_sensor/lidarlite",10,&QNode::lidar_cb,this);
 
 		// Publication
-		pub_[0] = n.advertise<PosSp>("gcs/position_setpoint", 10);
+		pub_[0] = n.advertise<PosSp>("gcs/setpoint_raw/position", 10);
 		pub_[1] = n.advertise<RCOverride>("mavros/rc/override", 10);
 
 		// Services
@@ -221,12 +221,14 @@ void QNode::set_offboard()
 {
 	mavros_msgs::SetMode set_mode;
 	set_mode.request.custom_mode = "OFFBOARD";
+	set_mode_client.call( set_mode );
 }
 
 void QNode::set_manual()
 {
 	mavros_msgs::SetMode set_mode;
 	set_mode.request.custom_mode = "MANUAL";
+	set_mode_client.call( set_mode );
 }
 
 void QNode::set_ctrl_mode( ControlModes mode )
@@ -387,7 +389,7 @@ void QNode::att_sp_cb(const AttSp::ConstPtr &msg)
 		buf[5] = (180.0/3.14)*msg->body_rate.z;
 		buf[0] = now();
 		
-		Q_EMIT emit_attitude_setpoint( buf );
+		Q_EMIT emit_attitude_setpoint( buf, (msg->header.seq % 40) == 0 );
 	}
 }
 
@@ -459,7 +461,7 @@ void QNode::gps_pos_cb(const GPSPos::ConstPtr &msg)
 	{
 		double* buf = (double*)malloc(3*sizeof(double));
 		buf[1] = (double)(msg->relPosN + msg->relPosHPN*1e-2)*1e-2;
-		buf[2] = (double)(msg->relPosE + msg->relPosHPE*1e-2)*1e-2; 
+		buf[2] = (double)(msg->relPosE + msg->relPosHPE*1e-2)*1e-2*(-1.0); 
 		buf[0] = now();
 		
 		Q_EMIT emit_gps_pos_measurements( buf );

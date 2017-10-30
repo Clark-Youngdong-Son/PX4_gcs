@@ -79,7 +79,7 @@ Q_SIGNALS:
 	void emit_flight_mode( const char* );
 	void emit_msf_state(double*);
 	void emit_position_setpoint(double*, int, bool);
-	void emit_attitude_setpoint(double*);
+	void emit_attitude_setpoint(double*, bool);
 	void emit_flow_measurements(double*);
 	void emit_vo_measurements(double*);
 	void emit_gps_pos_measurements(double*);
