@@ -129,7 +129,7 @@
                 }, 
                 "mouse_pub_topic": {
                   "type": "repr", 
-                  "repr": "u'/rovio/image/compressed_mouse_left'"
+                  "repr": "u'/rovio/image_mouse_left'"
                 }, 
                 "toolbar_hidden": {
                   "type": "repr", 
@@ -145,7 +145,7 @@
                 }, 
                 "topic": {
                   "type": "repr", 
-                  "repr": "u'/rovio/image/compressed'"
+                  "repr": "u'/rovio/image'"
                 }, 
                 "publish_click_location": {
                   "type": "repr", 
@@ -334,8 +334,8 @@
       "keys": {
         "geometry": {
           "type": "repr(QByteArray.hex)", 
-          "repr(QByteArray.hex)": "QtCore.QByteArray('01d9d0cb000100000000004d000000b400000381000003b900000057000000da00000377000003af000000000000')", 
-          "pretty-print": "     M       W   w     "
+          "repr(QByteArray.hex)": "QtCore.QByteArray('01d9d0cb0001000000000043000000aa00000377000003af0000004d000000d00000036d000003a5000000000000')", 
+          "pretty-print": "     C   w   M   m     "
         }, 
         "state": {
           "type": "repr(QByteArray.hex)", 
