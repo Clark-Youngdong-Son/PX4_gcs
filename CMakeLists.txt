@@ -30,5 +30,6 @@ target_link_libraries(px4_gcs ${QT_LIBRARIES} ${catkin_LIBRARIES} ${LIBXML2_LIBR
 
 add_dependencies(px4_gcs optical_flow_generate_messages_cpp)
 add_dependencies(px4_gcs ublox_msgs_generate_messages_cpp)
+add_dependencies(px4_gcs dji_sdk_generate_messages_cpp)
 
 install(TARGETS px4_gcs RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})

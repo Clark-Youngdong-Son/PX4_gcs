@@ -23,9 +23,13 @@
 #include <std_msgs/String.h>
 #include <std_msgs/Bool.h>
 #include <std_msgs/Float64.h>
-
 #include <optical_flow/FlowMeasurements.h>
 #include <ublox_msgs/NavRELPOSNED.h>
+// for dji
+#include <dji_sdk/DroneArmControl.h>
+#include <dji_sdk/SDKControlAuthority.h>
+#include <sensor_msgs/Imu.h>
+#include <sensor_msgs/Joy.h>
 #include "control_modes.h"
 
 #include <thread>
@@ -85,6 +89,7 @@ Q_SIGNALS:
 	void emit_gps_pos_measurements(double*);
 	void emit_lidar_measurements(double*);
 	void emit_kill_switch_enabled(bool);
+	void emit_dji_att(double*);
 
 private:
 	int init_argc;
@@ -94,7 +99,7 @@ private:
 	ros::Time t_init_;
 	
 	/** subscriber and callbacks **/
-	ros::Subscriber sub_[8];
+	ros::Subscriber sub_[9];
 	void px4_state_cb(const PX4State::ConstPtr &);
 	void rc_in_cb(const RCIn::ConstPtr &);
 	void att_sp_cb(const AttSp::ConstPtr &);
@@ -103,6 +108,8 @@ private:
 	void vo_cb(const VO::ConstPtr &);
 	void gps_pos_cb(const GPSPos::ConstPtr &);
 	void lidar_cb(const Lidar::ConstPtr &);
+	void dji_att_cb(const sensor_msgs::Imu::ConstPtr &);
+
 	PX4State px4_state_;
 	MSFState msf_state_;
 
@@ -113,7 +120,7 @@ private:
 	/** service client **/
 	ros::ServiceClient arming_client;
 	ros::ServiceClient set_mode_client;
-	mavros_msgs::CommandBool arm_cmd;
+	//mavros_msgs::CommandBool arm_cmd;
 
 	/** flags **/
 	bool init_flag_;

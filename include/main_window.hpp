@@ -37,6 +37,7 @@ class ICSL_GCS : public QMainWindow
 		void set_gps_pos_measurements(double*);
 		void set_lidar_measurements(double*);
 		void set_kill_switch_enabled(bool);
+		void set_dji_att(double*);
 
 		void on_btn_P_pressed(){ qnode.move_setpoint( 2, true ); }
 		void on_btn_O_pressed(){ qnode.move_setpoint( 2, false ); }

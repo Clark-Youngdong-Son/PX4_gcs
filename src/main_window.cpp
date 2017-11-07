@@ -40,6 +40,8 @@ ICSL_GCS::ICSL_GCS(int argc, char** argv, QWidget *parent)
 						  this, SLOT(set_lidar_measurements(double*))); 
 	QObject::connect(&qnode, SIGNAL(emit_kill_switch_enabled(bool)), 
 						  this, SLOT(set_kill_switch_enabled(bool))); 
+	QObject::connect(&qnode, SIGNAL(emit_dji_att(double*)), 
+						  this, SLOT(set_dji_att(double*))); 
 
 	key_P = new QShortcut(Qt::Key_P, ui.centralwidget);
 	key_O = new QShortcut(Qt::Key_O, ui.centralwidget);
@@ -300,6 +302,15 @@ void ICSL_GCS::set_kill_switch_enabled(bool tf)
 	}
 }
 
+void ICSL_GCS::set_dji_att(double* buf)
+{
+	graph[6] ->draw(buf[0], buf[1], 2); // roll
+	graph[7] ->draw(buf[0], buf[2], 2); // pitch
+	graph[8] ->draw(buf[0], buf[3], 2); // yaw
+	graph[9] ->draw(buf[0], buf[4], 2); // wx
+	graph[10]->draw(buf[0], buf[5], 2); // wy
+	graph[11]->draw(buf[0], buf[6], 2); // wz
+}
 /** etcs **/
 void ICSL_GCS::setupGraph()
 {

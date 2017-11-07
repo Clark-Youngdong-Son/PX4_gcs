@@ -52,14 +52,19 @@ bool QNode::init()
 		sub_[5] = n.subscribe<VO>("rovio/pose_with_covariance_stamped",10,&QNode::vo_cb,this);
 		sub_[6] = n.subscribe<GPSPos>("ublox_rover/navrelposned",10,&QNode::gps_pos_cb,this);
 		sub_[7] = n.subscribe<Lidar>("mavros/distance_sensor/lidarlite",10,&QNode::lidar_cb,this);
+	//	sub_[8] = n.subscribe<sensor_msgs::Imu>
+	//		("dji_sdk/imu", 10, &QNode::dji_att_cb, this);
 
 		// Publication
 		pub_[0] = n.advertise<PosSp>("gcs/setpoint_raw/position", 10);
 		pub_[1] = n.advertise<RCOverride>("mavros/rc/override", 10);
 
 		// Services
-		arming_client = n.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
-		set_mode_client = n.serviceClient<mavros_msgs::SetMode>("mavros/set_mode");
+		//arming_client = n.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
+		//set_mode_client = n.serviceClient<mavros_msgs::SetMode>("mavros/set_mode");
+		arming_client = n.serviceClient<dji_sdk::DroneArmControl>("dji_sdk/drone_arm_control");
+		set_mode_client = n.serviceClient<dji_sdk::SDKControlAuthority>
+			("dji_sdk/sdk_control_authority");
 
 		start();
 		return true;
@@ -161,74 +166,108 @@ void QNode::run()
 void QNode::set_arm()
 {
 	bool success = false;
+	
+	dji_sdk::DroneArmControl arm_cmd;
+	arm_cmd.request.arm = true;
 
-	if(px4_flag_)
+	if( arming_client.call( arm_cmd ) && arm_cmd.response.result )
 	{
-		if(px4_state_.armed) // px4 is already armed.
-		{
-			success = true;
-		}
-		else // px4 is disarmed, so try to arm.
-		{
-			arm_cmd.request.value = true;
-			if( arming_client.call(arm_cmd) && arm_cmd.response.success )
-			{
-				initialize_pos_setpoint();
-				success = true;
-			}
-			else
-			{
-				success = false;
-			}
-		}
+		initialize_pos_setpoint();
+		success = true;
+		Q_EMIT emit_arming_state( true );
 	}
-	else
-	{
-		success = false;
-	}
+
+
+//	if(px4_flag_)
+//	{
+//		if(px4_state_.armed) // px4 is already armed.
+//		{
+//			success = true;
+//		}
+//		else // px4 is disarmed, so try to arm.
+//		{
+//			arm_cmd.request.value = true;
+//			if( arming_client.call(arm_cmd) && arm_cmd.response.success )
+//			{
+//				initialize_pos_setpoint();
+//				success = true;
+//			}
+//			else
+//			{
+//				success = false;
+//			}
+//		}
+//	}
+//	else
+//	{
+//		success = false;
+//	}
 }
 
 void QNode::set_disarm()
 {
 	bool success = false;
+	dji_sdk::DroneArmControl arm_cmd;
+	arm_cmd.request.arm = false;
 
-	if(px4_flag_)
+	if( arming_client.call( arm_cmd ) && arm_cmd.response.result )
 	{
-		if(!px4_state_.armed) // px4 is already armed.
-		{
-			success = true;
-		}
-		else // px4 is disarmed, so try to arm.
-		{
-			arm_cmd.request.value = false;
-			if( arming_client.call(arm_cmd) && arm_cmd.response.success )
-			{
-				success = true;
-			}
-			else
-			{
-				success = false;
-			}
-		}
+		success = true;
+		Q_EMIT emit_arming_state( false );
 	}
-	else
-	{
-		success = false;
-	}
+
+
+//	if(px4_flag_)
+//	{
+//		if(!px4_state_.armed) // px4 is already armed.
+//		{
+//			success = true;
+//		}
+//		else // px4 is disarmed, so try to arm.
+//		{
+//			arm_cmd.request.value = false;
+//			if( arming_client.call(arm_cmd) && arm_cmd.response.success )
+//			{
+//				success = true;
+//			}
+//			else
+//			{
+//				success = false;
+//			}
+//		}
+//	}
+//	else
+//	{
+//		success = false;
+//	}
 }
 
 void QNode::set_offboard()
 {
-	mavros_msgs::SetMode set_mode;
-	set_mode.request.custom_mode = "OFFBOARD";
-	set_mode_client.call( set_mode );
+	dji_sdk::SDKControlAuthority set_mode;
+	set_mode.request.control_enable = true;
+
+	if( set_mode_client.call( set_mode ) && set_mode.response.result )
+	{
+		Q_EMIT emit_flight_mode( "OFFBOARD" );
+	}
+//	mavros_msgs::SetMode set_mode;
+//	set_mode.request.custom_mode = "OFFBOARD";
+//	set_mode_client.call( set_mode );
 }
 
 void QNode::set_manual()
 {
-	mavros_msgs::SetMode set_mode;
-	set_mode.request.custom_mode = "MANUAL";
-	set_mode_client.call( set_mode );
+	dji_sdk::SDKControlAuthority set_mode;
+	set_mode.request.control_enable = false;
+	
+	if( set_mode_client.call( set_mode ) && set_mode.response.result )
+	{
+		Q_EMIT emit_flight_mode( "MANUAL" );
+	}
+//	mavros_msgs::SetMode set_mode;
+//	set_mode.request.custom_mode = "MANUAL";
+//	set_mode_client.call( set_mode );
 }
 
 void QNode::set_ctrl_mode( ControlModes mode )
@@ -351,11 +390,11 @@ void QNode::px4_state_cb(const PX4State::ConstPtr &msg)
 		px4_timer_ = 0.0;
 	}
 	
-	if(init_flag_)
-	{
-		Q_EMIT emit_arming_state( px4_state_.armed );
-		Q_EMIT emit_flight_mode( px4_state_.mode.c_str() );
-	}
+//	if(init_flag_)
+//	{
+//		Q_EMIT emit_arming_state( px4_state_.armed );
+//		Q_EMIT emit_flight_mode( px4_state_.mode.c_str() );
+//	}
 }
 
 void QNode::rc_in_cb(const RCIn::ConstPtr &msg)
@@ -399,25 +438,28 @@ void QNode::msf_state_cb(const MSFState::ConstPtr &msg)
 
 	if(init_flag_)
 	{
-		double roll, pitch, yaw;
-		q2e( msg->pose.pose.orientation, roll, pitch, yaw);
-		
-		double* buf = (double*)malloc(13*sizeof(double));	
-		buf[1] = msg->pose.pose.position.x;
-		buf[2] = msg->pose.pose.position.y;
-		buf[3] = msg->pose.pose.position.z;
-		buf[4] = msg->twist.twist.linear.x;
-		buf[5] = msg->twist.twist.linear.y;
-		buf[6] = msg->twist.twist.linear.z;
-		buf[7] = roll*(180.0/3.14);
-		buf[8] = pitch*(180.0/3.14);
-		buf[9] = yaw*(180.0/3.14);
-		buf[10] = (180.0/3.14)*msg->twist.twist.angular.x;
-		buf[11] = (180.0/3.14)*msg->twist.twist.angular.y;
-		buf[12] = (180.0/3.14)*msg->twist.twist.angular.z;
-		buf[0] = now();
+		if( (msg->header.seq % 10) == 0 )
+		{
+			double roll, pitch, yaw;
+			q2e( msg->pose.pose.orientation, roll, pitch, yaw);
+			
+			double* buf = (double*)malloc(13*sizeof(double));	
+			buf[1] = msg->pose.pose.position.x;
+			buf[2] = msg->pose.pose.position.y;
+			buf[3] = msg->pose.pose.position.z;
+			buf[4] = msg->twist.twist.linear.x;
+			buf[5] = msg->twist.twist.linear.y;
+			buf[6] = msg->twist.twist.linear.z;
+			buf[7] = roll*(180.0/3.14);
+			buf[8] = pitch*(180.0/3.14);
+			buf[9] = yaw*(180.0/3.14);
+			buf[10] = (180.0/3.14)*msg->twist.twist.angular.x;
+			buf[11] = (180.0/3.14)*msg->twist.twist.angular.y;
+			buf[12] = (180.0/3.14)*msg->twist.twist.angular.z;
+			buf[0] = now();
 
-		Q_EMIT emit_msf_state( buf );
+			Q_EMIT emit_msf_state( buf );
+		}
 	}
 }
 
@@ -477,6 +519,30 @@ void QNode::lidar_cb(const Lidar::ConstPtr &msg)
 		buf[0] = now();
 		
 		Q_EMIT emit_lidar_measurements( buf );
+	}
+}
+
+void QNode::dji_att_cb(const sensor_msgs::Imu::ConstPtr &msg)
+{
+	if(init_flag_)
+	{
+		if( msg->header.seq % 10 == 0)
+		{
+			double* buf = (double*)malloc(7*sizeof(double));
+			buf[0] = now();
+	
+			double roll, pitch, yaw;
+			q2e( msg->orientation, roll, pitch, yaw);
+	
+			buf[1] = (180.0/3.14)*roll;
+			buf[2] = (180.0/3.14)*pitch;
+			buf[3] = (180.0/3.14)*yaw;
+			buf[4] = (180.0/3.14)*msg->angular_velocity.x;
+			buf[5] = (180.0/3.14)*msg->angular_velocity.y;
+			buf[6] = (180.0/3.14)*msg->angular_velocity.z;
+	
+			Q_EMIT emit_dji_att( buf );
+		}
 	}
 }
 
