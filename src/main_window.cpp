@@ -42,7 +42,12 @@ ICSL_GCS::ICSL_GCS(int argc, char** argv, QWidget *parent)
 						  this, SLOT(set_kill_switch_enabled(bool))); 
 	QObject::connect(&qnode, SIGNAL(emit_dji_att(double*)), 
 						  this, SLOT(set_dji_att(double*))); 
+	QObject::connect(&qnode, SIGNAL(emit_vicon_pos(double*)), 
+						  this, SLOT(set_vicon_pos(double*))); 
+	QObject::connect(&qnode, SIGNAL(emit_vicon_vel(double*)), 
+						  this, SLOT(set_vicon_vel(double*))); 
 
+	key_I = new QShortcut(Qt::Key_I, ui.centralwidget);
 	key_P = new QShortcut(Qt::Key_P, ui.centralwidget);
 	key_O = new QShortcut(Qt::Key_O, ui.centralwidget);
 	key_A = new QShortcut(Qt::Key_A, ui.centralwidget);
@@ -51,8 +56,11 @@ ICSL_GCS::ICSL_GCS(int argc, char** argv, QWidget *parent)
 	key_S = new QShortcut(Qt::Key_S, ui.centralwidget);
 	key_Z = new QShortcut(Qt::Key_Z, ui.centralwidget);
 	key_X = new QShortcut(Qt::Key_X, ui.centralwidget);
+	key_C = new QShortcut(Qt::Key_C, ui.centralwidget);
+	key_V = new QShortcut(Qt::Key_V, ui.centralwidget);
 	key_Space = new QShortcut(Qt::Key_Space, ui.centralwidget);
 	
+	QObject::connect( key_I, SIGNAL(activated()), this, SLOT(on_btn_I_pressed()) );
 	QObject::connect( key_P, SIGNAL(activated()), this, SLOT(on_btn_P_pressed()) );
 	QObject::connect( key_O, SIGNAL(activated()), this, SLOT(on_btn_O_pressed()) );
 	QObject::connect( key_A, SIGNAL(activated()), this, SLOT(on_btn_A_pressed()) );
@@ -61,6 +69,8 @@ ICSL_GCS::ICSL_GCS(int argc, char** argv, QWidget *parent)
 	QObject::connect( key_S, SIGNAL(activated()), this, SLOT(on_btn_S_pressed()) );
 	QObject::connect( key_Z, SIGNAL(activated()), this, SLOT(on_btn_Z_pressed()) );
 	QObject::connect( key_X, SIGNAL(activated()), this, SLOT(on_btn_X_pressed()) );
+	QObject::connect( key_C, SIGNAL(activated()), this, SLOT(on_btn_C_pressed()) );
+	QObject::connect( key_V, SIGNAL(activated()), this, SLOT(on_btn_V_pressed()) );
 	QObject::connect( key_Space, SIGNAL(activated()), this, SLOT(on_btn_Space_pressed()) );
 
 	setupGraph();
@@ -68,6 +78,7 @@ ICSL_GCS::ICSL_GCS(int argc, char** argv, QWidget *parent)
 
 ICSL_GCS::~ICSL_GCS()
 {
+	delete key_I;
 	delete key_P;
 	delete key_O;
 	delete key_A;
@@ -76,6 +87,8 @@ ICSL_GCS::~ICSL_GCS()
 	delete key_S;
 	delete key_Z;
 	delete key_X;
+	delete key_C;
+	delete key_V;
 }
 
 /** pushButton **/
@@ -161,6 +174,24 @@ void ICSL_GCS::set_msf_state(double* buf)
 	graph[9] ->draw(buf[0], buf[10], 0);
 	graph[10]->draw(buf[0], buf[11], 0);
 	graph[11]->draw(buf[0], buf[12], 0);
+}
+void ICSL_GCS::set_vicon_pos(double* buf)
+{
+	graph[0] ->draw(buf[0], buf[1],  2);
+	graph[1] ->draw(buf[0], buf[2],  2);
+	graph[2] ->draw(buf[0], buf[3],  2);
+	graph[6] ->draw(buf[0], buf[4],  2);
+	graph[7] ->draw(buf[0], buf[5],  2);
+	graph[8] ->draw(buf[0], buf[6],  2);
+}
+void ICSL_GCS::set_vicon_vel(double* buf)
+{
+	graph[3] ->draw(buf[0], buf[1],  2);
+	graph[4] ->draw(buf[0], buf[2],  2);
+	graph[5] ->draw(buf[0], buf[3],  2);
+	graph[9] ->draw(buf[0], buf[4],  2);
+	graph[10] ->draw(buf[0], buf[5],  2);
+	graph[11] ->draw(buf[0], buf[6],  2);
 }
 void ICSL_GCS::set_position_setpoint(double* buf, int mode, bool throttle)
 {
@@ -304,12 +335,12 @@ void ICSL_GCS::set_kill_switch_enabled(bool tf)
 
 void ICSL_GCS::set_dji_att(double* buf)
 {
-	graph[6] ->draw(buf[0], buf[1], 2); // roll
-	graph[7] ->draw(buf[0], buf[2], 2); // pitch
-	graph[8] ->draw(buf[0], buf[3], 2); // yaw
-	graph[9] ->draw(buf[0], buf[4], 2); // wx
-	graph[10]->draw(buf[0], buf[5], 2); // wy
-	graph[11]->draw(buf[0], buf[6], 2); // wz
+	graph[6] ->draw(buf[0], buf[1], 0); // roll
+	graph[7] ->draw(buf[0], buf[2], 0); // pitch
+//	graph[8] ->draw(buf[0], buf[3], 2); // yaw
+	graph[9] ->draw(buf[0], buf[4], 0); // wx
+	graph[10]->draw(buf[0], buf[5], 0); // wy
+	graph[11]->draw(buf[0], buf[6], 0); // wz
 }
 /** etcs **/
 void ICSL_GCS::setupGraph()

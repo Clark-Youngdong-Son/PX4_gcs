@@ -5,6 +5,7 @@
 #include <ros/network.h>
 #include <string>
 #include <QThread>
+#include <Eigen/Dense>
 
 #include <mavros_msgs/State.h>
 #include <mavros_msgs/RCIn.h>
@@ -25,6 +26,8 @@
 #include <std_msgs/Float64.h>
 #include <optical_flow/FlowMeasurements.h>
 #include <ublox_msgs/NavRELPOSNED.h>
+#include <std_srvs/SetBool.h>
+
 // for dji
 #include <dji_sdk/DroneArmControl.h>
 #include <dji_sdk/SDKControlAuthority.h>
@@ -72,6 +75,10 @@ public:
 	void move_setpoint(int, bool);
 	void emergency_stop();
 
+	void initialize_pos_setpoint();
+	void start_control_service();
+	void stop_control_service();
+
 Q_SIGNALS:
     // quit
 	void ros_shutdown();
@@ -90,6 +97,8 @@ Q_SIGNALS:
 	void emit_lidar_measurements(double*);
 	void emit_kill_switch_enabled(bool);
 	void emit_dji_att(double*);
+	void emit_vicon_pos(double*);
+	void emit_vicon_vel(double*);
 
 private:
 	int init_argc;
@@ -99,7 +108,7 @@ private:
 	ros::Time t_init_;
 	
 	/** subscriber and callbacks **/
-	ros::Subscriber sub_[9];
+	ros::Subscriber sub_[10];
 	void px4_state_cb(const PX4State::ConstPtr &);
 	void rc_in_cb(const RCIn::ConstPtr &);
 	void att_sp_cb(const AttSp::ConstPtr &);
@@ -109,10 +118,13 @@ private:
 	void gps_pos_cb(const GPSPos::ConstPtr &);
 	void lidar_cb(const Lidar::ConstPtr &);
 	void dji_att_cb(const sensor_msgs::Imu::ConstPtr &);
+	void vicon_pos_cb(const geometry_msgs::PoseStamped::ConstPtr &);
+	void vicon_vel_cb(const geometry_msgs::TwistStamped::ConstPtr &);
 
 	PX4State px4_state_;
 	MSFState msf_state_;
-
+	geometry_msgs::PoseStamped vicon_pos_;
+	
 	/** publisher **/
 	ros::Publisher pub_[2];
 	PosSp pos_sp_;
@@ -120,6 +132,8 @@ private:
 	/** service client **/
 	ros::ServiceClient arming_client;
 	ros::ServiceClient set_mode_client;
+	ros::ServiceClient start_control_client;
+	ros::ServiceClient stop_control_client;
 	//mavros_msgs::CommandBool arm_cmd;
 
 	/** flags **/
@@ -130,8 +144,9 @@ private:
 	bool init_pos_sp_;
 	double px4_timer_;
 	bool emergency_stop_;
+	bool msf_flag_ = false;
+	bool vicon_flag_ = false;
 
-	void initialize_pos_setpoint();
 	void override_kill_switch();
 };
 
