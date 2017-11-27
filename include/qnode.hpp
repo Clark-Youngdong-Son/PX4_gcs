@@ -24,8 +24,6 @@
 #include <std_msgs/String.h>
 #include <std_msgs/Bool.h>
 #include <std_msgs/Float64.h>
-#include <optical_flow/FlowMeasurements.h>
-#include <ublox_msgs/NavRELPOSNED.h>
 #include <std_srvs/SetBool.h>
 
 // for dji
@@ -33,6 +31,8 @@
 #include <dji_sdk/SDKControlAuthority.h>
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/Joy.h>
+
+// for rate_controller
 #include "control_modes.h"
 
 #include <thread>
@@ -45,10 +45,6 @@ typedef mavros_msgs::OverrideRCIn RCOverride;
 typedef mavros_msgs::PositionTarget PosSp;
 typedef mavros_msgs::AttitudeTarget AttSp;
 typedef nav_msgs::Odometry MSFState;
-typedef optical_flow::FlowMeasurements Flow;
-typedef geometry_msgs::PoseWithCovarianceStamped VO;
-typedef ublox_msgs::NavRELPOSNED GPSPos;
-typedef geometry_msgs::PointStamped Lidar;
 
 namespace px4_gcs 
 {
@@ -113,14 +109,11 @@ private:
 	void rc_in_cb(const RCIn::ConstPtr &);
 	void att_sp_cb(const AttSp::ConstPtr &);
 	void msf_state_cb(const MSFState::ConstPtr &);
-	void flow_cb(const Flow::ConstPtr &);
-	void vo_cb(const VO::ConstPtr &);
-	void gps_pos_cb(const GPSPos::ConstPtr &);
-	void lidar_cb(const Lidar::ConstPtr &);
 	void dji_att_cb(const sensor_msgs::Imu::ConstPtr &);
 	void vicon_pos_cb(const geometry_msgs::PoseStamped::ConstPtr &);
 	void vicon_vel_cb(const geometry_msgs::TwistStamped::ConstPtr &);
 
+	/** current states **/
 	PX4State px4_state_;
 	MSFState msf_state_;
 	geometry_msgs::PoseStamped vicon_pos_;
@@ -130,24 +123,28 @@ private:
 	PosSp pos_sp_;
 	
 	/** service client **/
-	ros::ServiceClient arming_client;
-	ros::ServiceClient set_mode_client;
-	ros::ServiceClient start_control_client;
-	ros::ServiceClient stop_control_client;
+	ros::ServiceClient srv_client_[4];
+	// 0 : arming, 1 : flight mode change (get authority),
+	// 2 : start control, 3 : stop control
+	//ros::ServiceClient arming_client;
+	//ros::ServiceClient set_mode_client;
 	//mavros_msgs::CommandBool arm_cmd;
+	//ros::ServiceClient start_control_client; // start publishing controller outputs
+	//ros::ServiceClient stop_control_client;  // stop publishing controller outputs
 
 	/** flags **/
-	bool init_flag_;
-	bool ros_flag_;
-	bool px4_flag_;
-	bool px4_signal_loss_;
-	bool init_pos_sp_;
-	double px4_timer_;
-	bool emergency_stop_;
+	bool init_flag_ = false;
+	bool ros_flag_ = false;
+	bool px4_flag_ = false; // true if temporal treatment for DJI platforms
+	bool px4_signal_loss_ = false;
+	bool init_pos_sp_ = false;
+	double px4_timer_ = 0.0;
+	bool emergency_stop_ = false;
 	bool msf_flag_ = false;
 	bool vicon_flag_ = false;
 
 	void override_kill_switch();
+	std::string platform_;
 };
 
 // utility functions

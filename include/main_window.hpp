@@ -7,7 +7,7 @@
 #include <QtGui/QWidget>
 #include <QObject>
 #include <QShortcut>
-#include "ui_msf_gcs.h"
+#include "ui_simple_gcs.h"
 #include "qnode.hpp"
 
 #include "modules/drawing_module.h"

@@ -291,32 +291,42 @@ void ICSL_GCS::set_attitude_setpoint(double* buf, bool throttle)
 	}
 }
 
+void ICSL_GCS::set_dji_att(double* buf)
+{
+	graph[6] ->draw(buf[0], buf[1], 0); // roll
+	graph[7] ->draw(buf[0], buf[2], 0); // pitch
+//	graph[8] ->draw(buf[0], buf[3], 2); // yaw
+	graph[9] ->draw(buf[0], buf[4], 0); // wx
+	graph[10]->draw(buf[0], buf[5], 0); // wy
+	graph[11]->draw(buf[0], buf[6], 0); // wz
+}
+
 void ICSL_GCS::set_flow_measurements(double* buf)
 {
-	graph[12] ->draw(buf[0], buf[1], 0); // fx
-	graph[13] ->draw(buf[0], buf[2], 0); // fy
-	graph[14] ->draw(buf[0], buf[3], 0); // fz
+	//graph[12] ->draw(buf[0], buf[1], 0); // fx
+	//graph[13] ->draw(buf[0], buf[2], 0); // fy
+	//graph[14] ->draw(buf[0], buf[3], 0); // fz
 }
 
 void ICSL_GCS::set_vo_measurements(double* buf)
 {
-	graph[15] ->draw(buf[0], buf[1], 0); // zx
-	graph[16] ->draw(buf[0], buf[2], 0); // zy
-	graph[17] ->draw(buf[0], buf[3], 0); // zz
-	graph[18] ->draw(buf[0], buf[4], 0); // zroll
-	graph[19] ->draw(buf[0], buf[5], 0); // zpitch
-	graph[20] ->draw(buf[0], buf[6], 0); // zyaw
+	//graph[15] ->draw(buf[0], buf[1], 0); // zx
+	//graph[16] ->draw(buf[0], buf[2], 0); // zy
+	//graph[17] ->draw(buf[0], buf[3], 0); // zz
+	//graph[18] ->draw(buf[0], buf[4], 0); // zroll
+	//graph[19] ->draw(buf[0], buf[5], 0); // zpitch
+	//graph[20] ->draw(buf[0], buf[6], 0); // zyaw
 }
 
 void ICSL_GCS::set_gps_pos_measurements(double* buf)
 {
-	graph[21] ->draw(buf[0], buf[1], 0); // gps_x
-	graph[22] ->draw(buf[0], buf[2], 0); // gps_y
+	//graph[21] ->draw(buf[0], buf[1], 0); // gps_x
+	//graph[22] ->draw(buf[0], buf[2], 0); // gps_y
 }
 
 void ICSL_GCS::set_lidar_measurements(double* buf)
 {
-	graph[23] ->draw(buf[0], buf[1], 0); // lidar
+	//graph[23] ->draw(buf[0], buf[1], 0); // lidar
 }
 
 void ICSL_GCS::set_kill_switch_enabled(bool tf)
@@ -333,15 +343,6 @@ void ICSL_GCS::set_kill_switch_enabled(bool tf)
 	}
 }
 
-void ICSL_GCS::set_dji_att(double* buf)
-{
-	graph[6] ->draw(buf[0], buf[1], 0); // roll
-	graph[7] ->draw(buf[0], buf[2], 0); // pitch
-//	graph[8] ->draw(buf[0], buf[3], 2); // yaw
-	graph[9] ->draw(buf[0], buf[4], 0); // wx
-	graph[10]->draw(buf[0], buf[5], 0); // wy
-	graph[11]->draw(buf[0], buf[6], 0); // wz
-}
 /** etcs **/
 void ICSL_GCS::setupGraph()
 {
@@ -381,41 +382,41 @@ void ICSL_GCS::setupGraph()
 	graph[11] = new DrawingModule( ui.widget_r );
 	graph[11]->setYLims(-30.0, 30.0);
 
-	graph[12] = new DrawingModule( ui.widget_f_x );
-	graph[12]->setYLims(-0.5, 0.5);
-	
-	graph[13] = new DrawingModule( ui.widget_f_y );
-	graph[13]->setYLims(-0.5, 0.5);
-	
-	graph[14] = new DrawingModule( ui.widget_f_z );
-	graph[14]->setYLims(-0.5, 0.5);
-	
-	graph[15] = new DrawingModule( ui.widget_z_x );
-	graph[15]->setYLims(-0.5, 0.5);
-	
-	graph[16] = new DrawingModule( ui.widget_z_y );
-	graph[16]->setYLims(-0.5, 0.5);
-	
-	graph[17] = new DrawingModule( ui.widget_z_z );
-	graph[17]->setYLims(-0.5, 0.5);
-	
-	graph[18] = new DrawingModule( ui.widget_z_roll );
-	graph[18]->setYLims(-10.0, 10.0);
-	
-	graph[19] = new DrawingModule( ui.widget_z_pitch );
-	graph[19]->setYLims(-10.0, 10.0);
-	
-	graph[20] = new DrawingModule( ui.widget_z_yaw );
-	graph[20]->setYLims(-10.0, 10.0);
-	
-	graph[21] = new DrawingModule( ui.widget_gps_x );
-	graph[21]->setYLims(-0.5, 0.5);
-	
-	graph[22] = new DrawingModule( ui.widget_gps_y );
-	graph[22]->setYLims(-0.5, 0.5);
-	
-	graph[23] = new DrawingModule( ui.widget_lidar );
-	graph[23]->setYLims(0.0, 0.5);
+	//graph[12] = new DrawingModule( ui.widget_f_x );
+	//graph[12]->setYLims(-0.5, 0.5);
+	//
+	//graph[13] = new DrawingModule( ui.widget_f_y );
+	//graph[13]->setYLims(-0.5, 0.5);
+	//
+	//graph[14] = new DrawingModule( ui.widget_f_z );
+	//graph[14]->setYLims(-0.5, 0.5);
+	//
+	//graph[15] = new DrawingModule( ui.widget_z_x );
+	//graph[15]->setYLims(-0.5, 0.5);
+	//
+	//graph[16] = new DrawingModule( ui.widget_z_y );
+	//graph[16]->setYLims(-0.5, 0.5);
+	//
+	//graph[17] = new DrawingModule( ui.widget_z_z );
+	//graph[17]->setYLims(-0.5, 0.5);
+	//
+	//graph[18] = new DrawingModule( ui.widget_z_roll );
+	//graph[18]->setYLims(-10.0, 10.0);
+	//
+	//graph[19] = new DrawingModule( ui.widget_z_pitch );
+	//graph[19]->setYLims(-10.0, 10.0);
+	//
+	//graph[20] = new DrawingModule( ui.widget_z_yaw );
+	//graph[20]->setYLims(-10.0, 10.0);
+	//
+	//graph[21] = new DrawingModule( ui.widget_gps_x );
+	//graph[21]->setYLims(-0.5, 0.5);
+	//
+	//graph[22] = new DrawingModule( ui.widget_gps_y );
+	//graph[22]->setYLims(-0.5, 0.5);
+	//
+	//graph[23] = new DrawingModule( ui.widget_lidar );
+	//graph[23]->setYLims(0.0, 0.5);
 }
 
 }  // namespace px4_gcs

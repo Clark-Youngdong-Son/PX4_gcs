@@ -1,10 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-	<node pkg="rqt_gui" type="rqt_gui" name="msf_gcs" output="screen"
-		clear_params="true" 
-		args="--perspective-file $(find px4_gcs)/msf.perspective">
-	</node>
-	<node pkg="px4_gcs" type="px4_gcs" name="px4_gcs" output="screen"
-		clear_params="true">
+	<node pkg="px4_gcs" type="px4_gcs" name="px4_gcs" output="screen" clear_params="true">
+		<param name="platform" type="string" value="pixhawk" />
 	</node>
 </launch>
