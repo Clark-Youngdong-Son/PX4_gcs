@@ -33,17 +33,18 @@ bool QNode::init()
 		ros::NodeHandle n;
 		
 		// parse platform info
-		if( n.getParam( (ros::this_node::getName()+"/platform").c_str(), platform_ ) )
+		std::string platform;
+		if( n.getParam( (ros::this_node::getName()+"/platform").c_str(), platform ) )
 		{
-			if( platform_ == "pixhawk" )
+			if( platform == "pixhawk" )
 			{
-				#define GCS_PIXHAWK
-				ROS_WARN("GCS for pixhawk");
+				platform_code_ = PIXHAWK;
+				ROS_WARN("Platform is [pixhawk]");
 			}
-			else if( platform_ == "dji")
+			else if( platform == "dji")
 			{
-				#define GCS_DJI
-				ROS_WARN("GCS for dji");
+				platform_code_ = DJI;
+				ROS_WARN("Platform is [dji]");
 			}
 			else
 			{
@@ -57,54 +58,89 @@ bool QNode::init()
 			return false;
 		}
 
+		// parse navigation info
+		std::string navigation;
+		if( n.getParam( (ros::this_node::getName()+"/navigation").c_str(), navigation ) )
+		{
+			if( navigation == "vicon" )
+			{
+				navigation_code_ = VICON;
+				ROS_WARN("Navigation system is [vicon]");
+			}
+			else if( platform == "msf")
+			{
+				navigation_code_ = MSF;
+				ROS_WARN("Navigation system is [msf]");
+			}
+			else
+			{
+				ROS_FATAL("Navigation system must be either [vicon] or [msf], please re-launch");
+				return false;
+			}
+		}
+		else
+		{
+			ROS_FATAL("Navigation system must be defined, please re-launch");
+			return false;
+		}
+
 		t_init_ = ros::Time::now();
 		
 		// Subscription
-		sub_[1] = n.subscribe<AttSp>
+		sub_[0] = n.subscribe<mavros_msgs::AttitudeTarget>
 			("mavros/setpoint_raw/attitude",10,&QNode::att_sp_cb,this);
-		sub_[2] = n.subscribe<MSFState>
-			("msf_core/odometry",10,&QNode::msf_state_cb,this);
-		sub_[3] = n.subscribe<geometry_msgs::PoseStamped>
-			("vicon/pose",10,&QNode::vicon_pos_cb,this);
-		sub_[4] = n.subscribe<geometry_msgs::TwistStamped>
-			("vicon/velocity",10,&QNode::vicon_vel_cb,this);
+		if( is_vicon() )
+		{
+			sub_[1] = n.subscribe<nav_msgs::Odometry>
+				("vicon/odometry",10,&QNode::odom_cb,this);
+		}
+		else if( is_msf() )
+		{
+			sub_[1] = n.subscribe<nav_msgs::Odometry>
+				("msf_core/odometry",10,&QNode::odom_cb,this);
+		}
+		//sub_[2] = n.subscribe<geometry_msgs::PoseStamped>
+		//	("vicon/pose",10,&QNode::vicon_pos_cb,this);
+		//sub_[3] = n.subscribe<geometry_msgs::TwistStamped>
+		//	("vicon/velocity",10,&QNode::vicon_vel_cb,this);
 		
-		//if(platform_ == "pixhawk")
-		//{
-#if defined(GCS_PIXHAWK)
-			sub_[5] = n.subscribe<PX4State>
+		if( is_pixhawk() )
+		{
+			sub_[2] = n.subscribe<mavros_msgs::State>
 				("mavros/state",10,&QNode::px4_state_cb,this);
-			sub_[6] = n.subscribe<RCIn>
+			sub_[3] = n.subscribe<mavros_msgs::RCIn>
 				("mavros/rc/in",10,&QNode::rc_in_cb,this);
-#elif defined(GCS_DJI)
-		//}
-		//else if(platform_ == "dji")
-		//{
-			sub_[5] = n.subscribe<sensor_msgs::Imu>
-				("dji_sdk/imu", 10, &QNode::dji_att_cb, this);
-#endif
-		//}
+			sub_[4] = n.subscribe<sensor_msgs::Imu>
+				("mavros/imu/data", 10, &QNode::imu_cb, this);
+		}
+		else if( is_dji() )
+		{
+			sub_[4] = n.subscribe<sensor_msgs::Imu>
+				("dji_sdk/imu", 10, &QNode::imu_cb, this);
+		}
+
 		// Publication
-		pub_[0] = n.advertise<PosSp>("gcs/setpoint_raw/position", 10);
-#ifdef GCS_PIXHAWK
-		pub_[1] = n.advertise<RCOverride>("mavros/rc/override", 10);
-#endif
+		pub_[0] = n.advertise<mavros_msgs::PositionTarget>("gcs/setpoint_raw/position", 10);
+		if( is_pixhawk() )
+			pub_[1] = n.advertise<mavros_msgs::OverrideRCIn>("mavros/rc/override", 10);
 
 		// Services
-#ifdef GCS_PIXHAWK
-		//// pixhawk
-		srv_client_[0] = n.serviceClient<mavros_msgs::CommandBool>
-			("mavros/cmd/arming");
-		srv_client_[1] = n.serviceClient<mavros_msgs::SetMode>
-			("mavros/set_mode");
-#endif
-#ifdef GCS_DJI
-		///// dji
-		srv_client_[0] = n.serviceClient<dji_sdk::DroneArmControl>
-			("dji_sdk/drone_arm_control");
-		srv_client_[1] = n.serviceClient<dji_sdk::SDKControlAuthority>
-			("dji_sdk/sdk_control_authority");
-#endif
+		if( is_pixhawk() )
+		{
+			//// pixhawk
+			srv_client_[0] = n.serviceClient<mavros_msgs::CommandBool>
+				("mavros/cmd/arming");
+			srv_client_[1] = n.serviceClient<mavros_msgs::SetMode>
+				("mavros/set_mode");
+		}
+		else if( is_dji() )
+		{
+			///// dji
+			srv_client_[0] = n.serviceClient<dji_sdk::DroneArmControl>
+				("dji_sdk/drone_arm_control");
+			srv_client_[1] = n.serviceClient<dji_sdk::SDKControlAuthority>
+				("dji_sdk/sdk_control_authority");
+		}
 		//// rate controller
 		srv_client_[2] = n.serviceClient<std_srvs::SetBool>
 			("rate_controller/start");
@@ -120,10 +156,8 @@ bool QNode::init()
 
 bool QNode::connect_px4()
 {
-#ifdef GCS_DJI
-	px4_flag_ = true; // dji does not require px4 connection status
-	ROS_INFO("SSIBAL");
-#endif
+	if( is_dji() )
+		px4_flag_ = true; // dji does not require px4 connection status
 
 	if(!ros_flag_)
 	{
@@ -172,20 +206,21 @@ void QNode::run()
 		ros::spinOnce();
 		if(init_flag_)
 		{
-#ifdef GCS_PIXHAWK
-			px4_timer_ += 1.0/rate;
-			if( (px4_timer_ > PX4_LOSS_TIME) && !px4_signal_loss_ )
+			if( is_pixhawk() )
 			{
-				Q_EMIT emit_pushButton_connect_px4_color(false);
-				px4_flag_ = false;
-				px4_signal_loss_ = true;
+				px4_timer_ += 1.0/rate;
+				if( (px4_timer_ > PX4_LOSS_TIME) && !px4_signal_loss_ )
+				{
+					Q_EMIT emit_pushButton_connect_px4_color(false);
+					px4_flag_ = false;
+					px4_signal_loss_ = true;
+				}
+				if( (px4_timer_ < PX4_LOSS_TIME) && px4_signal_loss_ )
+				{
+					Q_EMIT emit_pushButton_connect_px4_color(true);
+					px4_signal_loss_ = false;
+				}
 			}
-			if( (px4_timer_ < PX4_LOSS_TIME) && px4_signal_loss_ )
-			{
-				Q_EMIT emit_pushButton_connect_px4_color(true);
-				px4_signal_loss_ = false;
-			}
-#endif
 
 			if( init_pos_sp_ )
 			{	// publish setpoint
@@ -216,108 +251,121 @@ void QNode::run()
 
 void QNode::set_arm()
 {
-#ifdef GCS_PIXHAWK
-	if(px4_flag_)
+	if( is_pixhawk() )
 	{
-		if(!px4_state_.armed) // px4 is disarmed, so try to arm.
+		if(px4_flag_)
 		{
-			mavros_msgs::CommandBool arm_cmd;
-			arm_cmd.request.value = true;
-			if( srv_client_[0].call(arm_cmd) && arm_cmd.response.success )
+			if(!px4_state_.armed) // px4 is disarmed, so try to arm.
 			{
-				initialize_pos_setpoint();
-				Q_EMIT emit_arming_state( true );
+				mavros_msgs::CommandBool arm_cmd;
+				arm_cmd.request.value = true;
+				if( srv_client_[0].call(arm_cmd) && arm_cmd.response.success )
+				{
+					initialize_pos_setpoint();
+					Q_EMIT emit_arming_state( true );
+				}
 			}
 		}
 	}
-#elif defined(GCS_DJI)
-	dji_sdk::DroneArmControl arm_cmd;
-	arm_cmd.request.arm = true;
-	srv_client_[0].call( arm_cmd );
-
-	if( arm_cmd.response.result )
+	else if( is_dji() )
 	{
-		initialize_pos_setpoint();
-		Q_EMIT emit_arming_state( true );
+		dji_sdk::DroneArmControl arm_cmd;
+		arm_cmd.request.arm = true;
+		srv_client_[0].call( arm_cmd );
+	
+		if( arm_cmd.response.result )
+		{
+			initialize_pos_setpoint();
+			Q_EMIT emit_arming_state( true );
+		}
+		else
+			ROS_WARN("Receive control authority first");
 	}
-	else
-		ROS_WARN("Receive control authority first");
-#endif
 }
 
 void QNode::set_disarm()
 {
-#ifdef GCS_PIXHAWK
-	if(px4_flag_)
+	if( is_pixhawk() )
 	{
-		if(px4_state_.armed) // px4 is armed, so try to disarm.
+		if(px4_flag_)
 		{
-			mavros_msgs::CommandBool arm_cmd;
-			arm_cmd.request.value = false;
-			if( srv_client_[0].call(arm_cmd) && arm_cmd.response.success )
+			if(px4_state_.armed) // px4 is armed, so try to disarm.
 			{
-				Q_EMIT emit_arming_state( false );
-				// if disarmed, then stop control
-				std_srvs::SetBool stop;
-				srv_client_[3].call( stop );
-				init_pos_sp_ = false;
+				mavros_msgs::CommandBool arm_cmd;
+				arm_cmd.request.value = false;
+				if( srv_client_[0].call(arm_cmd) && arm_cmd.response.success )
+				{
+					Q_EMIT emit_arming_state( false );
+					// if disarmed, then stop control
+					stop_control_service();
+				}
 			}
 		}
 	}
-#elif defined( GCS_DJI )
-	dji_sdk::DroneArmControl arm_cmd;
-	arm_cmd.request.arm = false;
-	srv_client_[0].call( arm_cmd );
-
-	if( arm_cmd.response.result )
+	else if( is_dji() )
 	{
-		Q_EMIT emit_arming_state( false );
-		// if disarmed, then stop control
-		std_srvs::SetBool stop;
-		srv_client_[3].call( stop );
-		init_pos_sp_ = false;
+		dji_sdk::DroneArmControl arm_cmd;
+		arm_cmd.request.arm = false;
+		srv_client_[0].call( arm_cmd );
+	
+		if( arm_cmd.response.result )
+		{
+			Q_EMIT emit_arming_state( false );
+			// if disarmed, then stop control
+			stop_control_service();
+		}
 	}
-#endif
 }
 
 void QNode::set_offboard()
 {
-#ifdef GCS_PIXHAWK
-	mavros_msgs::SetMode set_mode;
-	set_mode.request.custom_mode = "OFFBOARD";
-	srv_client_[1].call( set_mode );
-#elif defined( GCS_DJI )
-	dji_sdk::SDKControlAuthority set_mode;
-	set_mode.request.control_enable = true; // ack_data wan to be 2
-	srv_client_[1].call( set_mode );
-
-	if( set_mode.response.ack_data == 2 )
+	if( is_pixhawk() )
 	{
-		Q_EMIT emit_flight_mode( "OFFBOARD" );
+		if( !control_flag_ )
+		{
+			ROS_WARN("Start rate controller (press C) first");
+			return;
+		}
+		mavros_msgs::SetMode set_mode;
+		set_mode.request.custom_mode = "OFFBOARD";
+		srv_client_[1].call( set_mode );
 	}
-	else if( set_mode.response.ack_data == 0 )
+	else if( is_dji() )
 	{
-		ROS_WARN("Turn on RC transmitter first");
+		dji_sdk::SDKControlAuthority set_mode;
+		set_mode.request.control_enable = true; // ack_data wan to be 2
+		srv_client_[1].call( set_mode );
+	
+		if( set_mode.response.ack_data == 2 )
+		{
+			Q_EMIT emit_flight_mode( "OFFBOARD" );
+		}
+		else if( set_mode.response.ack_data == 0 )
+		{
+			ROS_WARN("Turn on RC transmitter first");
+		}
 	}
-#endif
 }
 
 void QNode::set_manual()
 {
-#ifdef GCS_PIXHAWK
-	mavros_msgs::SetMode set_mode;
-	set_mode.request.custom_mode = "MANUAL";
-	srv_client_[1].call( set_mode );
-#elif defined( GCS_DJI )
-	dji_sdk::SDKControlAuthority set_mode;
-	set_mode.request.control_enable = false; // ack_data want to be 1
-	srv_client_[1].call( set_mode );
-
-	if( set_mode.response.ack_data == 1 )
+	if( is_pixhawk() )
 	{
-		Q_EMIT emit_flight_mode( "MANUAL" );
+		mavros_msgs::SetMode set_mode;
+		set_mode.request.custom_mode = "MANUAL";
+		srv_client_[1].call( set_mode );
 	}
-#endif
+	else if( is_dji() )
+	{
+		dji_sdk::SDKControlAuthority set_mode;
+		set_mode.request.control_enable = false; // ack_data want to be 1
+		srv_client_[1].call( set_mode );
+	
+		if( set_mode.response.ack_data == 1 )
+		{
+			Q_EMIT emit_flight_mode( "MANUAL" );
+		}
+	}
 }
 
 void QNode::set_ctrl_mode( ControlModes mode )
@@ -328,13 +376,10 @@ void QNode::set_ctrl_mode( ControlModes mode )
 		{	// change heading mode only
 			// reset setpoint yaw as current yaw
 			// reset setpoint yawrate as 0
+			
 			double roll, pitch, yaw;
+			q2e( odom_.pose.pose.orientation, roll, pitch, yaw);
 		
-			if( msf_flag_ )
-				q2e( msf_state_.pose.pose.orientation, roll, pitch, yaw);
-			else if( vicon_flag_ )
-				q2e( vicon_pos_.pose.orientation, roll, pitch, yaw);
-
 			pos_sp_.yaw = yaw;
 			pos_sp_.yaw_rate = 0.0;
 			
@@ -360,11 +405,8 @@ void QNode::set_ctrl_mode( ControlModes mode )
 		{	// change translation mode only
 			// reset setpoint position as current position
 			// reset setpoint velocity as 0
-			if( msf_flag_ )
-				pos_sp_.position = msf_state_.pose.pose.position;
-			else if( vicon_flag_ )
-				pos_sp_.position = vicon_pos_.pose.position;
 
+			pos_sp_.position = odom_.pose.pose.position;
 			pos_sp_.velocity.x = 0.0;
 			pos_sp_.velocity.y = 0.0;
 			pos_sp_.velocity.z = 0.0;
@@ -436,10 +478,11 @@ void QNode::move_setpoint(int idx, bool increase)
 
 void QNode::emergency_stop()
 {
-#ifdef GCS_PIXHAWK
-	std::thread	stop_thread( &QNode::override_kill_switch, this );
-	stop_thread.detach();
-#endif
+	if( is_pixhawk() )
+	{
+		std::thread	stop_thread( &QNode::override_kill_switch, this );
+		stop_thread.detach();
+	}
 }
 
 void QNode::start_control_service()
@@ -449,7 +492,9 @@ void QNode::start_control_service()
 		std_srvs::SetBool start;
 		bool is_send = srv_client_[2].call( start );
 		if( !is_send )
-			ROS_WARN("Start rate controller first");
+			ROS_WARN("Launch rate controller first");
+		else
+			control_flag_ = true;
 	}
 	else
 		ROS_WARN("Initialize position setpoint first");
@@ -457,13 +502,14 @@ void QNode::start_control_service()
 
 void QNode::stop_control_service()
 {
-	std_srvs::SetBool start;
-	srv_client_[3].call( start );
+	std_srvs::SetBool stop;
+	srv_client_[3].call( stop );
 	init_pos_sp_ = false;
+	control_flag_ = false;
 }
 
 /** subscription callbacks **/
-void QNode::px4_state_cb(const PX4State::ConstPtr &msg)
+void QNode::px4_state_cb(const mavros_msgs::State::ConstPtr &msg)
 {
 	px4_state_ = *msg;
 
@@ -481,7 +527,7 @@ void QNode::px4_state_cb(const PX4State::ConstPtr &msg)
 	}
 }
 
-void QNode::rc_in_cb(const RCIn::ConstPtr &msg)
+void QNode::rc_in_cb(const mavros_msgs::RCIn::ConstPtr &msg)
 {
 	int signal = msg->channels[4]; // signal of kill switch for my case..	
 	if(init_flag_)
@@ -497,7 +543,7 @@ void QNode::rc_in_cb(const RCIn::ConstPtr &msg)
 	}
 }
 
-void QNode::att_sp_cb(const AttSp::ConstPtr &msg)
+void QNode::att_sp_cb(const mavros_msgs::AttitudeTarget::ConstPtr &msg)
 {
 	if(init_flag_)
 	{
@@ -516,9 +562,9 @@ void QNode::att_sp_cb(const AttSp::ConstPtr &msg)
 	}
 }
 
-void QNode::msf_state_cb(const MSFState::ConstPtr &msg)
+void QNode::odom_cb(const nav_msgs::Odometry::ConstPtr &msg)
 {
-	msf_state_ = *msg;
+	odom_ = *msg;
 
 	if(init_flag_)
 	{
@@ -535,16 +581,16 @@ void QNode::msf_state_cb(const MSFState::ConstPtr &msg)
 			Eigen::Matrix<double,3,3> R = q.toRotationMatrix();
 
 			double* buf = (double*)malloc(13*sizeof(double));	
+			
 			buf[1] = msg->pose.pose.position.x;
 			buf[2] = msg->pose.pose.position.y;
 			buf[3] = msg->pose.pose.position.z;
 		
-			// this is now inertial velocity
 			Eigen::Matrix<double,3,1> v_b;
 			v_b(0,0) = msg->twist.twist.linear.x;
 			v_b(1,0) = msg->twist.twist.linear.y;
 			v_b(2,0) = msg->twist.twist.linear.z;
-			Eigen::Matrix<double,3,1> v = R*v_b;
+			Eigen::Matrix<double,3,1> v = R*v_b; // this is now pos_rate
 			buf[4] = v(0,0); 
 			buf[5] = v(1,0);
 			buf[6] = v(2,0);
@@ -552,86 +598,45 @@ void QNode::msf_state_cb(const MSFState::ConstPtr &msg)
 			buf[7] = roll*(180.0/3.14);
 			buf[8] = pitch*(180.0/3.14);
 			buf[9] = yaw*(180.0/3.14);
-			buf[10] = (180.0/3.14)*msg->twist.twist.angular.x;
-			buf[11] = (180.0/3.14)*msg->twist.twist.angular.y;
-			buf[12] = (180.0/3.14)*msg->twist.twist.angular.z;
+
 			buf[0] = now();
 
-			Q_EMIT emit_msf_state( buf );
+			Q_EMIT emit_navigation_state( buf );
 		}
 	}
-	msf_flag_ = true;
 }
 
-void QNode::dji_att_cb(const sensor_msgs::Imu::ConstPtr &msg)
+void QNode::imu_cb(const sensor_msgs::Imu::ConstPtr &msg)
 {
 	if(init_flag_)
 	{
-		if( msg->header.seq % 40 == 0)
+		if( msg->header.seq % 10 == 0)
 		{
 			double* buf = (double*)malloc(7*sizeof(double));
 			buf[0] = now();
 	
-			double roll, pitch, yaw;
-			q2e( msg->orientation, roll, pitch, yaw);
+			double phi, theta, psi;
+			q2e( msg->orientation, phi, theta, psi);
 	
-			buf[1] = (180.0/3.14)*roll;
-			buf[2] = (180.0/3.14)*pitch;
-			buf[3] = (180.0/3.14)*yaw;
-			buf[4] = (180.0/3.14)*msg->angular_velocity.x;
-			buf[5] = (180.0/3.14)*msg->angular_velocity.y;
-			buf[6] = (180.0/3.14)*msg->angular_velocity.z;
+			buf[1] = (180.0/3.14)*phi;
+			buf[2] = (180.0/3.14)*theta;
+			buf[3] = (180.0/3.14)*psi;
+
+			Eigen::Matrix<double,3,1> w_b;
+			w_b(0,0) = msg->angular_velocity.x;
+			w_b(1,0) = msg->angular_velocity.y;
+			w_b(2,0) = msg->angular_velocity.z;
+			Eigen::Matrix<double,3,3> T;
+			T(0,0) = 1.0; T(0,1) = sin(phi)*tan(theta); T(0,2) = cos(phi)*tan(theta);
+			T(1,0) = 0.0; T(1,1) = cos(phi); 			T(1,2) = -sin(phi);
+			T(2,0) = 0.0; T(2,1) = sin(phi)/cos(theta); T(2,2) = cos(phi)/cos(theta);
+			Eigen::Matrix<double,3,1> euler_rate = T * w_b;
+
+			buf[4] = (180.0/3.14)*euler_rate(0,0);
+			buf[5] = (180.0/3.14)*euler_rate(1,0);
+			buf[6] = (180.0/3.14)*euler_rate(2,0);
 	
-			Q_EMIT emit_dji_att( buf );
-
-			ROS_WARN("SSIBAL");
-		}
-	}
-}
-
-void QNode::vicon_pos_cb(const geometry_msgs::PoseStamped::ConstPtr &msg)
-{
-	vicon_pos_ = *msg;
-	
-	if(init_flag_)
-	{
-		if( (msg->header.seq % 10) == 0 )
-		{
-			double roll, pitch, yaw;
-			q2e( msg->pose.orientation, roll, pitch, yaw);
-
-			double* buf = (double*)malloc(7*sizeof(double));	
-			buf[1] = msg->pose.position.x;
-			buf[2] = msg->pose.position.y;
-			buf[3] = msg->pose.position.z;
-
-			buf[4] = roll*(180.0/3.14);
-			buf[5] = pitch*(180.0/3.14);
-			buf[6] = yaw*(180.0/3.14);
-			buf[0] = now();
-
-			Q_EMIT emit_vicon_pos( buf );
-		}
-	}
-	vicon_flag_ = true;
-}
-
-void QNode::vicon_vel_cb(const geometry_msgs::TwistStamped::ConstPtr &msg)
-{
-	if(init_flag_)
-	{
-		if( (msg->header.seq % 10) == 0 )
-		{
-			double* buf = (double*)malloc(7*sizeof(double));	
-			buf[1] = msg->twist.linear.x;
-			buf[2] = msg->twist.linear.y;
-			buf[3] = msg->twist.linear.z;
-			buf[4] = (180.0/3.14)*msg->twist.angular.x;
-			buf[5] = (180.0/3.14)*msg->twist.angular.y;
-			buf[6] = (180.0/3.14)*msg->twist.angular.z;
-			buf[0] = now();
-
-			Q_EMIT emit_vicon_vel( buf );
+			Q_EMIT emit_imu_state( buf );
 		}
 	}
 }
@@ -640,22 +645,15 @@ void QNode::initialize_pos_setpoint()
 {
 	if( !init_pos_sp_ )
 	{
-		if( msf_flag_ )
-		{
-			pos_sp_.position = msf_state_.pose.pose.position;
-			double roll, pitch, yaw;
-			q2e( msf_state_.pose.pose.orientation, roll, pitch, yaw);
-			pos_sp_.yaw = yaw;
-			ROS_WARN("Initialize position setpoint with msf states");
-		}
-		else if( vicon_flag_ )
-		{
-			pos_sp_.position = vicon_pos_.pose.position;
-			double roll, pitch, yaw;
-			q2e( vicon_pos_.pose.orientation, roll, pitch, yaw);
-			pos_sp_.yaw = yaw;
-			ROS_WARN("Initialize position setpoint with vicon states");
-		}
+		pos_sp_.position = odom_.pose.pose.position;
+		double roll, pitch, yaw;
+		q2e( odom_.pose.pose.orientation, roll, pitch, yaw);
+		pos_sp_.yaw = yaw;
+
+		if( is_vicon() )
+			ROS_WARN("Initialize position setpoint with vicon");
+		else if( is_msf() )
+			ROS_WARN("Initialize position setpoint with msf");
 		else
 		{
 			ROS_ERROR("No state measurements");
@@ -681,7 +679,7 @@ void QNode::override_kill_switch()
 	double rate = 200.0;
 	ros::Rate loop_rate(rate);
 	
-	RCOverride msg;
+	mavros_msgs::OverrideRCIn msg;
 	msg.channels[0] = 1100;
 	msg.channels[1] = 1500;
 	msg.channels[2] = 1500;
@@ -693,6 +691,7 @@ void QNode::override_kill_switch()
 
 	if(init_flag_)
 	{
+		ROS_FATAL("Emergency mode enabled!!!");
 		while( ros::ok() )
 		{
 			ros::spinOnce();

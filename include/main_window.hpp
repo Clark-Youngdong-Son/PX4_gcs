@@ -29,17 +29,11 @@ class ICSL_GCS : public QMainWindow
 		void set_pushButton_connect_px4_color(bool);
 		void set_arming_state(bool);
 		void set_flight_mode(const char*);
-		void set_msf_state(double*);
+		void set_navigation_state(double*);
+		void set_imu_state(double*);
 		void set_position_setpoint(double*, int, bool);
 		void set_attitude_setpoint(double*, bool);
-		void set_flow_measurements(double*);
-		void set_vo_measurements(double*);
-		void set_gps_pos_measurements(double*);
-		void set_lidar_measurements(double*);
 		void set_kill_switch_enabled(bool);
-		void set_dji_att(double*);
-		void set_vicon_pos(double*);
-		void set_vicon_vel(double*);
 
 		void on_btn_I_pressed(){ qnode.initialize_pos_setpoint(); }
 		void on_btn_P_pressed(){ qnode.move_setpoint( 2, true ); }

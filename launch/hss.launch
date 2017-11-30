@@ -2,5 +2,6 @@
 <launch>
 	<node pkg="px4_gcs" type="px4_gcs" name="px4_gcs" output="screen" clear_params="true">
 		<param name="platform" type="string" value="pixhawk" />
+		<param name="navigation" type="string" value="vicon" />
 	</node>
 </launch>

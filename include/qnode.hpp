@@ -39,12 +39,17 @@
 
 #define PX4_LOSS_TIME 2.0
 
-typedef mavros_msgs::State PX4State;
-typedef mavros_msgs::RCIn RCIn;
-typedef mavros_msgs::OverrideRCIn RCOverride;
-typedef mavros_msgs::PositionTarget PosSp;
-typedef mavros_msgs::AttitudeTarget AttSp;
-typedef nav_msgs::Odometry MSFState;
+enum PlatformCode
+{
+	PIXHAWK = 0,
+	DJI = 1
+};
+
+enum NavigationCode
+{
+	VICON = 0,
+	MSF = 1
+};
 
 namespace px4_gcs 
 {
@@ -84,17 +89,11 @@ Q_SIGNALS:
 	void emit_pushButton_connect_px4_color(bool);
 	void emit_arming_state(bool);
 	void emit_flight_mode( const char* );
-	void emit_msf_state(double*);
+	void emit_navigation_state(double*);
+	void emit_imu_state(double*);
 	void emit_position_setpoint(double*, int, bool);
 	void emit_attitude_setpoint(double*, bool);
-	void emit_flow_measurements(double*);
-	void emit_vo_measurements(double*);
-	void emit_gps_pos_measurements(double*);
-	void emit_lidar_measurements(double*);
 	void emit_kill_switch_enabled(bool);
-	void emit_dji_att(double*);
-	void emit_vicon_pos(double*);
-	void emit_vicon_vel(double*);
 
 private:
 	int init_argc;
@@ -102,35 +101,27 @@ private:
 	double now(){ return (ros::Time::now() - t_init_).toSec(); }
 
 	ros::Time t_init_;
-	
+
 	/** subscriber and callbacks **/
 	ros::Subscriber sub_[10];
-	void px4_state_cb(const PX4State::ConstPtr &);
-	void rc_in_cb(const RCIn::ConstPtr &);
-	void att_sp_cb(const AttSp::ConstPtr &);
-	void msf_state_cb(const MSFState::ConstPtr &);
-	void dji_att_cb(const sensor_msgs::Imu::ConstPtr &);
-	void vicon_pos_cb(const geometry_msgs::PoseStamped::ConstPtr &);
-	void vicon_vel_cb(const geometry_msgs::TwistStamped::ConstPtr &);
+	void px4_state_cb(const mavros_msgs::State::ConstPtr &);
+	void rc_in_cb(const mavros_msgs::RCIn::ConstPtr &);
+	void att_sp_cb(const mavros_msgs::AttitudeTarget::ConstPtr &);
+	void odom_cb(const nav_msgs::Odometry::ConstPtr &);
+	void imu_cb(const sensor_msgs::Imu::ConstPtr &);
 
 	/** current states **/
-	PX4State px4_state_;
-	MSFState msf_state_;
-	geometry_msgs::PoseStamped vicon_pos_;
+	mavros_msgs::State px4_state_;
+	nav_msgs::Odometry odom_;
 	
 	/** publisher **/
 	ros::Publisher pub_[2];
-	PosSp pos_sp_;
+	mavros_msgs::PositionTarget pos_sp_;
 	
 	/** service client **/
 	ros::ServiceClient srv_client_[4];
 	// 0 : arming, 1 : flight mode change (get authority),
 	// 2 : start control, 3 : stop control
-	//ros::ServiceClient arming_client;
-	//ros::ServiceClient set_mode_client;
-	//mavros_msgs::CommandBool arm_cmd;
-	//ros::ServiceClient start_control_client; // start publishing controller outputs
-	//ros::ServiceClient stop_control_client;  // stop publishing controller outputs
 
 	/** flags **/
 	bool init_flag_ = false;
@@ -140,11 +131,17 @@ private:
 	bool init_pos_sp_ = false;
 	double px4_timer_ = 0.0;
 	bool emergency_stop_ = false;
-	bool msf_flag_ = false;
-	bool vicon_flag_ = false;
+	bool control_flag_ = false;
 
 	void override_kill_switch();
-	std::string platform_;
+
+	PlatformCode platform_code_;
+	bool is_pixhawk(){ return platform_code_ == PIXHAWK; }
+	bool is_dji(){ return platform_code_ == DJI; }
+
+	NavigationCode navigation_code_;
+	bool is_vicon(){ return navigation_code_ == VICON; }
+	bool is_msf(){ return navigation_code_ == MSF; }
 };
 
 // utility functions

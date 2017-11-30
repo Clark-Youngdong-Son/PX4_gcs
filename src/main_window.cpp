@@ -24,28 +24,16 @@ ICSL_GCS::ICSL_GCS(int argc, char** argv, QWidget *parent)
 						  this, SLOT(set_arming_state(bool)));
 	QObject::connect(&qnode, SIGNAL(emit_flight_mode(const char*)), 
 						  this, SLOT(set_flight_mode(const char*)));
-	QObject::connect(&qnode, SIGNAL(emit_msf_state(double*)), 
-						  this, SLOT(set_msf_state(double*))); 
+	QObject::connect(&qnode, SIGNAL(emit_navigation_state(double*)), 
+						  this, SLOT(set_navigation_state(double*))); 
+	QObject::connect(&qnode, SIGNAL(emit_imu_state(double*)), 
+						  this, SLOT(set_imu_state(double*))); 
 	QObject::connect(&qnode, SIGNAL(emit_position_setpoint(double*, int, bool)), 
 						  this, SLOT(set_position_setpoint(double*, int, bool))); 
 	QObject::connect(&qnode, SIGNAL(emit_attitude_setpoint(double*, bool)), 
 						  this, SLOT(set_attitude_setpoint(double*, bool))); 
-	QObject::connect(&qnode, SIGNAL(emit_flow_measurements(double*)), 
-						  this, SLOT(set_flow_measurements(double*))); 
-	QObject::connect(&qnode, SIGNAL(emit_vo_measurements(double*)), 
-						  this, SLOT(set_vo_measurements(double*))); 
-	QObject::connect(&qnode, SIGNAL(emit_gps_pos_measurements(double*)), 
-						  this, SLOT(set_gps_pos_measurements(double*))); 
-	QObject::connect(&qnode, SIGNAL(emit_lidar_measurements(double*)), 
-						  this, SLOT(set_lidar_measurements(double*))); 
 	QObject::connect(&qnode, SIGNAL(emit_kill_switch_enabled(bool)), 
 						  this, SLOT(set_kill_switch_enabled(bool))); 
-	QObject::connect(&qnode, SIGNAL(emit_dji_att(double*)), 
-						  this, SLOT(set_dji_att(double*))); 
-	QObject::connect(&qnode, SIGNAL(emit_vicon_pos(double*)), 
-						  this, SLOT(set_vicon_pos(double*))); 
-	QObject::connect(&qnode, SIGNAL(emit_vicon_vel(double*)), 
-						  this, SLOT(set_vicon_vel(double*))); 
 
 	key_I = new QShortcut(Qt::Key_I, ui.centralwidget);
 	key_P = new QShortcut(Qt::Key_P, ui.centralwidget);
@@ -160,7 +148,7 @@ void ICSL_GCS::set_flight_mode(const char* mode)
 		ui.pushButton_flight_mode->setStyleSheet("background-color: rgba(0,255,0,128);");
 	}
 }
-void ICSL_GCS::set_msf_state(double* buf)
+void ICSL_GCS::set_navigation_state(double* buf)
 {
 	graph[0] ->draw(buf[0], buf[1],  0);
 	graph[1] ->draw(buf[0], buf[2],  0);
@@ -171,27 +159,6 @@ void ICSL_GCS::set_msf_state(double* buf)
 	graph[6] ->draw(buf[0], buf[7],  0);
 	graph[7] ->draw(buf[0], buf[8],  0);
 	graph[8] ->draw(buf[0], buf[9],  0);
-	graph[9] ->draw(buf[0], buf[10], 0);
-	graph[10]->draw(buf[0], buf[11], 0);
-	graph[11]->draw(buf[0], buf[12], 0);
-}
-void ICSL_GCS::set_vicon_pos(double* buf)
-{
-	graph[0] ->draw(buf[0], buf[1],  2);
-	graph[1] ->draw(buf[0], buf[2],  2);
-	graph[2] ->draw(buf[0], buf[3],  2);
-	graph[6] ->draw(buf[0], buf[4],  2);
-	graph[7] ->draw(buf[0], buf[5],  2);
-	graph[8] ->draw(buf[0], buf[6],  2);
-}
-void ICSL_GCS::set_vicon_vel(double* buf)
-{
-	graph[3] ->draw(buf[0], buf[1],  2);
-	graph[4] ->draw(buf[0], buf[2],  2);
-	graph[5] ->draw(buf[0], buf[3],  2);
-	graph[9] ->draw(buf[0], buf[4],  2);
-	graph[10] ->draw(buf[0], buf[5],  2);
-	graph[11] ->draw(buf[0], buf[6],  2);
 }
 void ICSL_GCS::set_position_setpoint(double* buf, int mode, bool throttle)
 {
@@ -291,42 +258,14 @@ void ICSL_GCS::set_attitude_setpoint(double* buf, bool throttle)
 	}
 }
 
-void ICSL_GCS::set_dji_att(double* buf)
+void ICSL_GCS::set_imu_state(double* buf)
 {
-	graph[6] ->draw(buf[0], buf[1], 0); // roll
-	graph[7] ->draw(buf[0], buf[2], 0); // pitch
+	graph[6] ->draw(buf[0], buf[1], 2); // roll
+	graph[7] ->draw(buf[0], buf[2], 2); // pitch
 //	graph[8] ->draw(buf[0], buf[3], 2); // yaw
-	graph[9] ->draw(buf[0], buf[4], 0); // wx
-	graph[10]->draw(buf[0], buf[5], 0); // wy
-	graph[11]->draw(buf[0], buf[6], 0); // wz
-}
-
-void ICSL_GCS::set_flow_measurements(double* buf)
-{
-	//graph[12] ->draw(buf[0], buf[1], 0); // fx
-	//graph[13] ->draw(buf[0], buf[2], 0); // fy
-	//graph[14] ->draw(buf[0], buf[3], 0); // fz
-}
-
-void ICSL_GCS::set_vo_measurements(double* buf)
-{
-	//graph[15] ->draw(buf[0], buf[1], 0); // zx
-	//graph[16] ->draw(buf[0], buf[2], 0); // zy
-	//graph[17] ->draw(buf[0], buf[3], 0); // zz
-	//graph[18] ->draw(buf[0], buf[4], 0); // zroll
-	//graph[19] ->draw(buf[0], buf[5], 0); // zpitch
-	//graph[20] ->draw(buf[0], buf[6], 0); // zyaw
-}
-
-void ICSL_GCS::set_gps_pos_measurements(double* buf)
-{
-	//graph[21] ->draw(buf[0], buf[1], 0); // gps_x
-	//graph[22] ->draw(buf[0], buf[2], 0); // gps_y
-}
-
-void ICSL_GCS::set_lidar_measurements(double* buf)
-{
-	//graph[23] ->draw(buf[0], buf[1], 0); // lidar
+	graph[9] ->draw(buf[0], buf[4], 2); // wx
+	graph[10]->draw(buf[0], buf[5], 2); // wy
+	graph[11]->draw(buf[0], buf[6], 2); // wz
 }
 
 void ICSL_GCS::set_kill_switch_enabled(bool tf)
