@@ -60,6 +60,11 @@ public:
 	void increaseHeightVel(){ spInitializedFlag ? sp.velocity.z += 0.1 : sp.velocity.z += 0.0; }
 	void decreaseHeightVel(){ spInitializedFlag ? sp.velocity.z -= 0.1 : sp.velocity.z -= 0.0; }
 	void mpcSetting(bool);
+	void offsetSetting(bool);
+	void offsetChange(int);
+	void changeFinal();
+	void mpcGo();
+	void mpcInitialize();
 
 Q_SIGNALS:
     void rosShutdown();
@@ -86,6 +91,7 @@ Q_SIGNALS:
 	void emit_gps_comp_hdg(double,double);
 	void emit_gps_rel_alt(double,double);
 	void emit_gps_raw_vel(double,double,double,double);
+	void emit_att_target_data(double,double,double,double);
 
 private:
 	int init_argc;
@@ -145,6 +151,7 @@ private:
 	bool gpsRelAltUpdateFlag;
 	bool gpsRawVelUpdateFlag;
 	bool mpcStartFlag;
+	bool mpcGoFlag;
 
 	/** publisher **/
 	ros::Publisher sp_publisher;			// setpoint raw

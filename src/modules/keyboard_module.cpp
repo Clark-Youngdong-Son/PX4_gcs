@@ -24,6 +24,14 @@ KeyboardModule::KeyboardModule( QWidget* _widget, QObject* _object )
 	key9 = new QShortcut(Qt::Key_S, widget);
 	key10 = new QShortcut(Qt::Key_M, widget);
 	key11 = new QShortcut(Qt::Key_Comma, widget);
+	key12 = new QShortcut(Qt::Key_N, widget);
+	key13 = new QShortcut(Qt::Key_I, widget);
+	key14 = new QShortcut(Qt::Key_J, widget);
+	key15 = new QShortcut(Qt::Key_K, widget);
+	key16 = new QShortcut(Qt::Key_L, widget);
+	key17 = new QShortcut(Qt::Key_T, widget);
+	key18 = new QShortcut(Qt::Key_G, widget);
+	key19 = new QShortcut(Qt::Key_R, widget);
 }
 
 KeyboardModule::~KeyboardModule()
@@ -39,6 +47,14 @@ KeyboardModule::~KeyboardModule()
 	delete key9;
 	delete key10;
 	delete key11;
+	delete key12;
+	delete key13;
+	delete key14;
+	delete key15;
+	delete key16;
+	delete key17;
+	delete key18;
+	delete key19;
 	delete widget;
 	delete node;
 }
@@ -56,6 +72,14 @@ void KeyboardModule::connect()
 	QObject::connect( key9, SIGNAL(activated()), node, SLOT(on_btn_S_pressed()) );
 	QObject::connect( key10, SIGNAL(activated()), node, SLOT(on_btn_M_pressed()) );
 	QObject::connect( key11, SIGNAL(activated()), node, SLOT(on_btn_Comma_pressed()) );
+	QObject::connect( key12, SIGNAL(activated()), node, SLOT(on_btn_N_pressed()) );
+	QObject::connect( key13, SIGNAL(activated()), node, SLOT(on_btn_I_pressed()) );
+	QObject::connect( key14, SIGNAL(activated()), node, SLOT(on_btn_J_pressed()) );
+	QObject::connect( key15, SIGNAL(activated()), node, SLOT(on_btn_K_pressed()) );
+	QObject::connect( key16, SIGNAL(activated()), node, SLOT(on_btn_L_pressed()) );
+	QObject::connect( key17, SIGNAL(activated()), node, SLOT(on_btn_T_pressed()) );
+	QObject::connect( key18, SIGNAL(activated()), node, SLOT(on_btn_G_pressed()) );
+	QObject::connect( key19, SIGNAL(activated()), node, SLOT(on_btn_R_pressed()) );
 }
 
 void KeyboardModule::log( const string msg )

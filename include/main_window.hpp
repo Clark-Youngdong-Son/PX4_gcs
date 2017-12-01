@@ -47,6 +47,7 @@ class ICSL_GCS : public QMainWindow
 		void set_gps_comp_hdg(double,double);
 		void set_gps_rel_alt(double,double);
 		void set_gps_raw_vel(double,double,double,double);
+		void set_att_target_data(double,double,double,double);
 
 		void on_pushButton_connect_ros_clicked();
 		void on_pushButton_connect_px4_clicked();
@@ -73,6 +74,14 @@ class ICSL_GCS : public QMainWindow
 		//void on_btn_X_pressed(){ qnode.setOffboard(); }
 		void on_btn_M_pressed(){ qnode.mpcSetting(true); }
 		void on_btn_Comma_pressed(){ qnode.mpcSetting(false); }
+		void on_btn_N_pressed(){ qnode.offsetSetting(true); }
+		void on_btn_I_pressed(){ qnode.offsetChange(1); }
+		void on_btn_J_pressed(){ qnode.offsetChange(2); }
+		void on_btn_K_pressed(){ qnode.offsetChange(3); }
+		void on_btn_L_pressed(){ qnode.offsetChange(4); }
+		void on_btn_T_pressed(){ qnode.changeFinal(); }
+		void on_btn_G_pressed(){ qnode.mpcGo(); }
+		void on_btn_R_pressed(){ qnode.mpcInitialize(); }
 
 	private:
 		Ui::ICSL_GCS ui;

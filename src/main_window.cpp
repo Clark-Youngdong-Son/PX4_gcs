@@ -64,6 +64,8 @@ ICSL_GCS::ICSL_GCS(int argc, char** argv, QWidget *parent)
 			this, SLOT(set_gps_rel_alt(double,double)));
 	QObject::connect(&qnode, SIGNAL(emit_gps_raw_vel(double,double,double,double)), 
 			this, SLOT(set_gps_raw_vel(double,double,double,double)));
+	QObject::connect(&qnode, SIGNAL(emit_att_target_data(double,double,double,double)), 
+					this, SLOT(set_att_target_data(double,double,double,double))); 
 
 	logger = new LoggingModule( ui.view_logging );
 	
@@ -184,6 +186,12 @@ void ICSL_GCS::set_pqr_target_data(double p_t, double q_t, double r_t, double t)
 	graph[9]->draw(t, p_t, 1);
 	graph[10]->draw(t, -q_t, 1);
 	graph[11]->draw(t, -r_t, 1);
+}
+void ICSL_GCS::set_att_target_data(double r, double p, double y, double t)
+{
+	graph[6]->draw(t, r, 1);
+	graph[7]->draw(t, p, 1);
+	graph[8]->draw(t, y, 1);
 }
 
 void ICSL_GCS::set_arming_state(bool armed)

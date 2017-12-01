@@ -21,7 +21,8 @@ QNode::QNode(int argc, char** argv ) :
 	gpsRelAltUpdateFlag(false),
 	gpsRawVelUpdateFlag(false),
 	spInitializedFlag(false),
-	mpcStartFlag(false)
+	mpcStartFlag(false),
+	mpcGoFlag(false)
 	{}
 
 QNode::~QNode() 
@@ -84,7 +85,8 @@ bool QNode::init()
 
 		// Publication
 		sp_publisher = n.advertise<mavros_msgs::PositionTarget>
-			("mavros/setpoint_raw/local", 1);
+			//("mavros/setpoint_raw/local", 1);
+			("gcs/position_setpoint", 1);
 		mpc_publisher = n.advertise<keyboard::Key>
 			("keyboard/keydown", 1);
 
@@ -210,6 +212,62 @@ void QNode::mpcSetting(bool flag)
 	}
 }
 
+void QNode::mpcInitialize()
+{
+	keyboard::Key key_msg;
+	key_msg.code = key_msg.KEY_r;
+	mpc_publisher.publish(key_msg);
+}
+void QNode::offsetSetting(bool flag)
+{
+	keyboard::Key key_msg;
+	if(flag)
+	{
+		key_msg.code = key_msg.KEY_n;
+		mpc_publisher.publish(key_msg);
+	}
+}
+
+void QNode::offsetChange(int command)
+{
+	keyboard::Key key_msg;
+	if(command==1)
+	{
+		key_msg.code = key_msg.KEY_i;
+		mpc_publisher.publish(key_msg);
+	}
+	else if(command==2)
+	{
+		key_msg.code = key_msg.KEY_j;
+		mpc_publisher.publish(key_msg);
+	}
+	else if(command==3)
+	{
+		key_msg.code = key_msg.KEY_k;
+		mpc_publisher.publish(key_msg);
+	}
+	else if(command==4)
+	{
+		key_msg.code = key_msg.KEY_l;
+		mpc_publisher.publish(key_msg);
+	}
+}
+
+void QNode::changeFinal()
+{
+	keyboard::Key key_msg;
+	key_msg.code = key_msg.KEY_t;
+	mpc_publisher.publish(key_msg);
+}
+
+void QNode::mpcGo()
+{
+	mpcGoFlag = true;
+	keyboard::Key key_msg;
+	key_msg.code = key_msg.KEY_g;
+	mpc_publisher.publish(key_msg);
+}
+
 bool QNode::connect_px4()
 {
 	if(!ROSConnectionFlag)
@@ -300,12 +358,12 @@ void QNode::run()
 			}
 			if(rpUpdateFlag)
 			{
-				double r_target = (180.0/3.14)*rp.roll_target;
-				double p_target = -(180.0/3.14)*rp.pitch_target; //// coordination problem..
+				//double r_target = (180.0/3.14)*rp.roll_target;
+				//double p_target = -(180.0/3.14)*rp.pitch_target; //// coordination problem..
 
-				double t = (ros::Time::now() - t_init).toSec();
+				//double t = (ros::Time::now() - t_init).toSec();
 
-				Q_EMIT emit_rp_target_data(r_target, p_target, t);
+				//Q_EMIT emit_rp_target_data(r_target, p_target, t);
 			}
 			if(mocapPosUpdateFlag)
 			{
@@ -382,10 +440,13 @@ void QNode::run()
 				gpsRawVelUpdateFlag = false;
 			}
 
-			if(spInitializedFlag && !mpcStartFlag)
+			if(spInitializedFlag)
 			{
 				sp.header.stamp = ros::Time::now();
-				sp_publisher.publish( sp );	
+//				if(mpcGoFlag && mpcStartFlag)	sp.type_mask = sp.IGNORE_PX | sp.IGNORE_PY | sp.IGNORE_PZ;
+				//else                sp.type_mask = 0;
+				sp.type_mask = 0;
+				if(!mpcStartFlag) sp_publisher.publish( sp );	
 
 				double x = sp.position.x;
 				double y = sp.position.y;
@@ -502,17 +563,17 @@ void QNode::mpc_sp_cb(const mavros_msgs::PositionTarget::ConstPtr &msg)
 
 void QNode::mpc_sp_cb2(const mavros_msgs::AttitudeTarget::ConstPtr &msg)
 {
-	if(mpcStartFlag)
-	{
+//	if(mpcStartFlag)
+//	{
 		//Attitude quarternion
-//		double q0 = msg->orientation.w;
-//		double q1 = msg->orientation.x;
-//		double q2 = msg->orientation.y;
-//		double q3 = msg->orientation.z;
-//
-//		double roll = atan2(2*(q0*q1 + q2*q3),1-2*(q1*q1+q2*q2));
-//		double pitch = asin(2*(q0*q2-q3*q1));
-//		double yaw = atan2(2*(q0*q3 + q1*q2),1-2*(q2*q2+q3*q3));
+		double q0 = msg->orientation.w;
+		double q1 = msg->orientation.x;
+		double q2 = msg->orientation.y;
+		double q3 = msg->orientation.z;
+
+		double roll = 180.0/3.14*atan2(2*(q0*q1 + q2*q3),1-2*(q1*q1+q2*q2));
+		double pitch = 180.0/3.14*asin(2*(q0*q2-q3*q1));
+		double yaw = 180.0/3.14*atan2(2*(q0*q3 + q1*q2),1-2*(q2*q2+q3*q3));
 
 		//Attitude rates
 		double p = 180.0/3.14*msg->body_rate.x;
@@ -520,7 +581,8 @@ void QNode::mpc_sp_cb2(const mavros_msgs::AttitudeTarget::ConstPtr &msg)
 		double r = 180.0/3.14*msg->body_rate.z;
 		double t = (ros::Time::now() - t_init).toSec();
 		Q_EMIT emit_pqr_target_data(p,q,r,t);
-	}
+		//Q_EMIT emit_att_target_data(roll, pitch, yaw, t);
+//	}
 }
 
 void QNode::initializeSetpoint()
@@ -538,8 +600,8 @@ void QNode::initializeSetpoint()
 	sp.acceleration_or_force.x = 0.0;
 	sp.acceleration_or_force.y = 0.0;
 	sp.acceleration_or_force.z = 0.0;
-	//sp.yaw = -90.0*(3.14/180.0);
-	sp.yaw = 0.0;
+	sp.yaw = 90.0*(3.14/180.0);
+	//sp.yaw = 0.0;
 
 	spInitializedFlag = true;
 }
