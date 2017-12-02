@@ -32,6 +32,8 @@ ICSL_GCS::ICSL_GCS(int argc, char** argv, QWidget *parent)
 						  this, SLOT(set_position_setpoint(double*, int, bool))); 
 	QObject::connect(&qnode, SIGNAL(emit_attitude_setpoint(double*, bool)), 
 						  this, SLOT(set_attitude_setpoint(double*, bool))); 
+	QObject::connect(&qnode, SIGNAL(emit_thrust_setpoint(double, bool)), 
+						  this, SLOT(set_thrust_setpoint(double, bool))); 
 	QObject::connect(&qnode, SIGNAL(emit_kill_switch_enabled(bool)), 
 						  this, SLOT(set_kill_switch_enabled(bool))); 
 
@@ -255,6 +257,14 @@ void ICSL_GCS::set_attitude_setpoint(double* buf, bool throttle)
 		graph[9] ->draw(buf[0], buf[3], 1); // wx
 		graph[10]->draw(buf[0], buf[4], 1); // wy
 		graph[11]->draw(buf[0], buf[5], 1); // wz
+	}
+}
+
+void ICSL_GCS::set_thrust_setpoint(double buf, bool throttle)
+{
+	if( throttle )
+	{
+		ui.pushButton_thrust->setText(QString( std::to_string( (int)(buf*100.0) ).c_str() ));
 	}
 }
 

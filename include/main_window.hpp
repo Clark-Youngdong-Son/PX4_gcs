@@ -33,6 +33,7 @@ class ICSL_GCS : public QMainWindow
 		void set_imu_state(double*);
 		void set_position_setpoint(double*, int, bool);
 		void set_attitude_setpoint(double*, bool);
+		void set_thrust_setpoint(double, bool);
 		void set_kill_switch_enabled(bool);
 
 		void on_btn_I_pressed(){ qnode.initialize_pos_setpoint(); }

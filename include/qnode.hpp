@@ -93,6 +93,7 @@ Q_SIGNALS:
 	void emit_imu_state(double*);
 	void emit_position_setpoint(double*, int, bool);
 	void emit_attitude_setpoint(double*, bool);
+	void emit_thrust_setpoint(double, bool);
 	void emit_kill_switch_enabled(bool);
 
 private:
