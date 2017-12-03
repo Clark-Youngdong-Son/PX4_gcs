@@ -554,8 +554,8 @@ void QNode::att_sp_cb(const mavros_msgs::AttitudeTarget::ConstPtr &msg)
 		buf[1] = (180.0/3.14)*roll;
 		buf[2] = (180.0/3.14)*pitch;
 		buf[3] = (180.0/3.14)*msg->body_rate.x;	// we use these values as "rotational velocity",
-		buf[4] = -(180.0/3.14)*msg->body_rate.y; // not "euler rates"
-		buf[5] = -(180.0/3.14)*msg->body_rate.z;
+		buf[4] = (180.0/3.14)*msg->body_rate.y; // not "euler rates"
+		buf[5] = (180.0/3.14)*msg->body_rate.z;
 		buf[0] = now();
 		
 		Q_EMIT emit_attitude_setpoint( buf, (msg->header.seq % 40) == 0 );
