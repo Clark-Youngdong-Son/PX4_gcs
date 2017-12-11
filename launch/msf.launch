@@ -2,7 +2,7 @@
 <launch>
 	<node pkg="px4_gcs" type="px4_gcs" name="px4_gcs" output="screen" clear_params="true">
 		<param name="platform" type="string" value="pixhawk" />
-		<param name="navigation" type="string" value="vicon" />
+		<param name="navigation" type="string" value="msf" />
 	</node>
 
 	<!--node pkg="rviz" type="rviz" name="rviz_gcs" output="screen" 
@@ -12,4 +12,5 @@
 	<node pkg="rostopic" type="rostopic" name="rviz_init" output="screen" 
 		args="pub -1 -f $(find px4_gcs)/rviz_init.yaml /tf tf2_msgs/TFMessage">
 	</node-->
+
 </launch>
