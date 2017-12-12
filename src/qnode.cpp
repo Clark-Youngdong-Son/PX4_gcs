@@ -92,8 +92,8 @@ bool QNode::init()
 		if( is_vicon() )
 		{
 			sub_[1] = n.subscribe<nav_msgs::Odometry>
-				//("mavros/local_position/odom",10,&QNode::odom_cb,this);
-				("vicon/odometry",10,&QNode::odom_cb,this);
+				("mavros/local_position/odom",10,&QNode::odom_cb,this);
+				//("vicon/odometry",10,&QNode::odom_cb,this);
 		}
 		else if( is_msf() )
 		{
