@@ -5,11 +5,11 @@
 		<param name="navigation" type="string" value="vicon" />
 	</node>
 
-	<node pkg="rviz" type="rviz" name="rviz_gcs" output="screen" 
+	<!--node pkg="rviz" type="rviz" name="rviz_gcs" output="screen" 
 		args="-d $(find px4_gcs)/rviz_gcs.rviz">
-	</node>
+	-->
 	
-	<node pkg="rostopic" type="rostopic" name="rviz_init" output="screen" 
+	<!--node pkg="rostopic" type="rostopic" name="rviz_init" output="screen" 
 		args="pub -1 -f $(find px4_gcs)/rviz_init.yaml /tf tf2_msgs/TFMessage">
-	</node>
+	-->
 </launch>
