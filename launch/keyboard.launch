@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<launch>
+
+	<arg name="gcs_count" default="1"/>
+	<arg name="name1" default="sss"/>
+	<arg name="name2" default="ssd"/>
+
+ 	<node pkg="keyboard" type="keyboard" name="keyboard" output="screen">
+ 	</node>
+
+ 	<node pkg="px4_gcs" type="px4_gcs_keyboard" name="px4_gcs_keyboard" 
+		output="screen" clear_params="true">
+		<param name="gcs_count" type="int" value="$(arg gcs_count)" />
+		<param name="name1" type="string" value="$(arg name1)" />
+		<param name="name2" type="string" value="$(arg name2)" />
+ 	</node>
+</launch>

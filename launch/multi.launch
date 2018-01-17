@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<launch>
+	<group ns="AM1">
+		<include file="$(find px4_gcs)/launch/single.launch" />
+	</group>
+
+	<group ns="AM2">
+		<include file="$(find px4_gcs)/launch/single.launch" />
+	</group>
+
+	<include file="$(find px4_gcs)/launch/keyboard.launch">
+		<arg name="gcs_count" value="2"/>
+		<arg name="name1" value="AM1" />
+		<arg name="name2" value="AM2" />
+	</include>
+
+</launch>
