@@ -3,6 +3,8 @@
 
 #include <ros/ros.h>
 #include <ros/network.h>
+#include <keyboard/Key.h>
+
 #include <string>
 #include <QThread>
 #include <Eigen/Dense>
