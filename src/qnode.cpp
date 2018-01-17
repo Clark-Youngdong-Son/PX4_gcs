@@ -119,6 +119,9 @@ bool QNode::init()
 				("dji_sdk/imu", 10, &QNode::imu_cb, this);
 		}
 
+		sub_[5] = n.subscribe<keyboard::Key>
+			("keyinput", 10, &QNode::key_cb, this);
+
 		// Publication
 		pub_[0] = n.advertise<mavros_msgs::PositionTarget>("gcs/setpoint_raw/position", 10);
 		if( is_pixhawk() )
@@ -640,6 +643,11 @@ void QNode::imu_cb(const sensor_msgs::Imu::ConstPtr &msg)
 			Q_EMIT emit_imu_state( buf );
 		//}
 	}
+}
+
+void QNode::key_cb(const keyboard::Key::ConstPtr &msg)
+{
+	Q_EMIT emit_keyinput( msg->code );
 }
 
 void QNode::initialize_pos_setpoint()

@@ -97,6 +97,7 @@ Q_SIGNALS:
 	void emit_attitude_setpoint(double*, bool);
 	void emit_thrust_setpoint(double, bool);
 	void emit_kill_switch_enabled(bool);
+	void emit_keyinput(int);
 
 private:
 	int init_argc;
@@ -112,6 +113,7 @@ private:
 	void att_sp_cb(const mavros_msgs::AttitudeTarget::ConstPtr &);
 	void odom_cb(const nav_msgs::Odometry::ConstPtr &);
 	void imu_cb(const sensor_msgs::Imu::ConstPtr &);
+	void key_cb(const keyboard::Key::ConstPtr &);
 
 	/** current states **/
 	mavros_msgs::State px4_state_;

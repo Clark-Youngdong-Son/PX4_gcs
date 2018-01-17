@@ -20,7 +20,7 @@ KeyboardHandler::KeyboardHandler()
 	{
 		pnh.getParam(("name"+std::to_string(i+1)).c_str(), name);
 		std::cout << name << std::endl;
-		keyboard_pub[i] = nh.advertise<keyboard::Key>((name+"/key_input").c_str(), 100);
+		keyboard_pub[i] = nh.advertise<keyboard::Key>((name+"/keyinput").c_str(), 100);
 	}
 }
 

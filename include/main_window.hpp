@@ -12,11 +12,12 @@
 
 #include "modules/drawing_module.h"
 #include "control_modes.h"
+#include "keyboard_handler.h"
 
 namespace px4_gcs 
 {
 
-class ICSL_GCS : public QMainWindow 
+class ICSL_GCS : public QMainWindow
 {
 	Q_OBJECT
 	
@@ -35,6 +36,7 @@ class ICSL_GCS : public QMainWindow
 		void set_attitude_setpoint(double*, bool);
 		void set_thrust_setpoint(double, bool);
 		void set_kill_switch_enabled(bool);
+		void set_keyinput(int);
 
 		void on_btn_I_pressed(){ qnode.initialize_pos_setpoint(); }
 		void on_btn_P_pressed(){ qnode.move_setpoint( 2, true ); }

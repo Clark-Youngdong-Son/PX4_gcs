@@ -36,6 +36,8 @@ ICSL_GCS::ICSL_GCS(int argc, char** argv, QWidget *parent)
 						  this, SLOT(set_thrust_setpoint(double, bool))); 
 	QObject::connect(&qnode, SIGNAL(emit_kill_switch_enabled(bool)), 
 						  this, SLOT(set_kill_switch_enabled(bool))); 
+	QObject::connect(&qnode, SIGNAL(emit_keyinput(int)), 
+						  this, SLOT(set_keyinput(int))); 
 
 	key_I = new QShortcut(Qt::Key_I, ui.centralwidget);
 	key_P = new QShortcut(Qt::Key_P, ui.centralwidget);
@@ -289,6 +291,53 @@ void ICSL_GCS::set_kill_switch_enabled(bool tf)
 	{
 		ui.pushButton_kill_switch->setText( QString("Disabled") );
 		ui.pushButton_kill_switch->setStyleSheet("background-color: rgba(255,0,0,128);");	
+	}
+}
+
+void ICSL_GCS::set_keyinput(int key)
+{
+	switch( key )
+	{
+		case Key_I:
+			on_btn_I_pressed();
+		break;
+		case Key_P:
+			on_btn_P_pressed();
+		break;
+		case Key_O:
+			on_btn_O_pressed();
+		break;
+		case Key_A:
+			on_btn_A_pressed();
+		break;
+		case Key_D:
+			on_btn_D_pressed();
+		break;
+		case Key_W:
+			on_btn_W_pressed();
+		break;
+		case Key_S:
+			on_btn_S_pressed();
+		break;
+		case Key_Z:
+			on_btn_Z_pressed();
+		break;
+		case Key_X:
+			on_btn_X_pressed();
+		break;
+		case Key_C:
+			on_btn_C_pressed();
+		break;
+		case Key_V:
+			on_btn_V_pressed();
+		break;
+		case Key_Space:
+			//on_btn_Space_pressed();
+			on_pushButton_arming_clicked();
+		break;
+
+		default:
+		break;
 	}
 }
 
