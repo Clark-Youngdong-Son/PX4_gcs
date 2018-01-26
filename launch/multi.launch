@@ -1,11 +1,21 @@
 <?xml version="1.0"?>
 <launch>
 	<group ns="AM1">
-		<include file="$(find px4_gcs)/launch/single.launch" />
+		<include file="$(find px4_gcs)/launch/single.launch">
+			<arg name="name" value="AM1"/>
+			<arg name="platform" value="pixhawk"/>
+			<arg name="navigation" value="vicon"/>
+			<arg name="traj" value="/home/hss/Documents/MATLAB/180119_RAM/AM1_traj.txt"/>
+		</include>
 	</group>
 
 	<group ns="AM2">
-		<include file="$(find px4_gcs)/launch/single.launch" />
+		<include file="$(find px4_gcs)/launch/single.launch">
+			<arg name="name" value="AM2"/>
+			<arg name="platform" value="pixhawk"/>
+			<arg name="navigation" value="vicon"/>
+			<arg name="traj" value="/home/hss/Documents/MATLAB/180119_RAM/AM2_traj.txt"/>
+		</include>
 	</group>
 
 	<include file="$(find px4_gcs)/launch/keyboard.launch">

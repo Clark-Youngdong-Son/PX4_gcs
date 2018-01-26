@@ -31,7 +31,12 @@ bool QNode::init()
 
 		ros::start(); // explicitly needed since our nodehandle is going out of scope.
 		ros::NodeHandle n;
-		
+	
+		// parse name
+		std::string name;
+		n.getParam( (ros::this_node::getName()+"/name").c_str(), name );
+		Q_EMIT emit_window_title( name.c_str() );
+
 		// parse platform info
 		std::string platform;
 		if( n.getParam( (ros::this_node::getName()+"/platform").c_str(), platform ) )
@@ -84,6 +89,20 @@ bool QNode::init()
 			return false;
 		}
 
+		std::string traj_dir;
+		if( n.getParam( (ros::this_node::getName()+"/traj").c_str(), traj_dir) )
+		{
+			if( load_traj_from_file( traj_dir ) )
+			{
+				is_traj_loaded_ = true;
+				ROS_INFO_STREAM( "Trajectory is loaded from " << traj_dir );
+			}
+		}
+		else
+		{
+			ROS_WARN("Trajectory file is not specified");
+		}
+
 		t_init_ = ros::Time::now();
 		
 		// Subscription
@@ -121,11 +140,16 @@ bool QNode::init()
 
 		sub_[5] = n.subscribe<keyboard::Key>
 			("keyinput", 10, &QNode::key_cb, this);
+		
+		sub_[6] = n.subscribe<sensor_msgs::JointState>
+			("dynamixel/current", 10, &QNode::dxl_cb, this);
 
 		// Publication
 		pub_[0] = n.advertise<mavros_msgs::PositionTarget>("gcs/setpoint_raw/position", 10);
 		if( is_pixhawk() )
 			pub_[1] = n.advertise<mavros_msgs::OverrideRCIn>("mavros/rc/override", 10);
+
+		pub_[2] = n.advertise<sensor_msgs::JointState>("dynamixel/desired", 10);
 
 		// Services
 		if( is_pixhawk() )
@@ -227,6 +251,12 @@ void QNode::run()
 
 			if( init_pos_sp_ )
 			{	// publish setpoint
+
+				if( is_traj_loaded_ && is_traj_moving_ )
+				{
+					update_traj();
+				}
+
 				pos_sp_.header.stamp = ros::Time::now();
 				pub_[0].publish( pos_sp_ );	
 				
@@ -245,6 +275,12 @@ void QNode::run()
 						(pos_sp_.header.seq % 30) == 0 );
 
 				pos_sp_.header.seq = pos_sp_.header.seq + 1;
+
+				if( dxl_subscribed_ )
+				{
+					dxl_des_.header.stamp = ros::Time::now();
+					pub_[2].publish( dxl_des_ );
+				}
 			}
 		}
 		loop_rate.sleep();
@@ -439,7 +475,7 @@ void QNode::move_setpoint(int idx, bool increase)
 				if( (mode & HOLD) || (mode & VELOCITY) )
 					increase ? pos_sp_.velocity.x += 0.1 : pos_sp_.velocity.x -= 0.1;
 				else if( (mode & POSITION) || (mode & TRAJECTORY) )
-					increase ? pos_sp_.position.x += 0.2 : pos_sp_.position.x -= 0.2;
+					increase ? pos_sp_.position.x += 0.1 : pos_sp_.position.x -= 0.1;
 				else
 					ROS_ERROR("unrecognized control mode");
 			break;
@@ -448,7 +484,7 @@ void QNode::move_setpoint(int idx, bool increase)
 				if( (mode & HOLD) || (mode & VELOCITY) )
 					increase ? pos_sp_.velocity.y += 0.1 : pos_sp_.velocity.y -= 0.1;
 				else if( (mode & POSITION) || (mode & TRAJECTORY) )
-					increase ? pos_sp_.position.y += 0.2 : pos_sp_.position.y -= 0.2;
+					increase ? pos_sp_.position.y += 0.1 : pos_sp_.position.y -= 0.1;
 				else
 					ROS_ERROR("unrecognized control mode");
 			break;
@@ -457,7 +493,7 @@ void QNode::move_setpoint(int idx, bool increase)
 				if(mode & VELOCITY)
 					increase ? pos_sp_.velocity.z += 0.1 : pos_sp_.velocity.z -= 0.1;
 				else if( (mode & HOLD) || (mode & POSITION) || (mode & TRAJECTORY) )
-					increase ? pos_sp_.position.z += 0.2 : pos_sp_.position.z -= 0.2;
+					increase ? pos_sp_.position.z += 0.1 : pos_sp_.position.z -= 0.1;
 				else
 					ROS_ERROR("unrecognized control mode");
 
@@ -614,8 +650,8 @@ void QNode::imu_cb(const sensor_msgs::Imu::ConstPtr &msg)
 {
 	if(init_flag_)
 	{
-		//if( msg->header.seq % 10 == 0)
-		//{
+		if( msg->header.seq % 10 == 0)
+		{
 			double* buf = (double*)malloc(7*sizeof(double));
 			buf[0] = now();
 	
@@ -641,13 +677,27 @@ void QNode::imu_cb(const sensor_msgs::Imu::ConstPtr &msg)
 			buf[6] = (180.0/3.14)*euler_rate(2,0);
 	
 			Q_EMIT emit_imu_state( buf );
-		//}
+		}
 	}
 }
 
 void QNode::key_cb(const keyboard::Key::ConstPtr &msg)
 {
 	Q_EMIT emit_keyinput( msg->code );
+}
+
+void QNode::dxl_cb(const sensor_msgs::JointState::ConstPtr &msg)
+{
+	dxl_cur_ = *msg;
+	if( !dxl_subscribed_ )
+	{
+		dxl_des_.position.resize( dxl_cur_.position.size() );
+		dxl_des_.velocity.resize( dxl_cur_.velocity.size() );
+		dxl_des_.effort.resize( dxl_cur_.effort.size() );
+
+		ROS_INFO("Dynamixel detected!");
+		dxl_subscribed_ = true;
+	}
 }
 
 void QNode::initialize_pos_setpoint()
@@ -680,6 +730,16 @@ void QNode::initialize_pos_setpoint()
 		pos_sp_.yaw_rate = 0.0;
 	
 		init_pos_sp_ = true;
+
+		if( dxl_subscribed_ )
+		{
+			for(int i=0; i<dxl_cur_.position.size(); i++)
+			{
+				dxl_des_.position[i] = dxl_cur_.position[i];
+				dxl_des_.velocity[i] = 0.0;
+				dxl_des_.effort[i] = 0.0;
+			}
+		}
 	}
 }
 
@@ -707,6 +767,81 @@ void QNode::override_kill_switch()
 			pub_[1].publish( msg );		
 			loop_rate.sleep();
 		}
+	}
+}
+
+bool QNode::load_traj_from_file( std::string dir )
+{
+	std::ifstream ifile( dir.c_str(), std::ios::in );
+	if( !ifile.is_open() )
+	{
+		ROS_FATAL("Error loading file!!");
+		return false;
+	}
+
+	std::string str;
+	traj_.clear();
+	while( std::getline(ifile, str) )
+	{
+		std::stringstream linestream(str);
+		std::string sub_str;
+
+		std::vector<double> tmp;
+		while( std::getline(linestream, sub_str, '\t') )
+		{
+			tmp.push_back(stod(sub_str));
+		}
+		traj_.push_back(tmp);
+	}
+}
+
+void QNode::move_to_initial_traj()
+{
+	if( is_traj_loaded_ )
+	{
+		traj_count_ = 0;
+		std::vector<double> init = traj_[0];
+		pos_sp_.position.x = init[0]; 
+		pos_sp_.position.y = init[1]; 
+		pos_sp_.position.z = init[2]; 
+		pos_sp_.yaw = init[3]; 
+
+		dxl_des_.position[0] = init[4] * (180.0/3.14);
+		dxl_des_.position[1] = init[5] * (180.0/3.14);
+	}
+	else
+	{
+		ROS_FATAL("Trajectory is not specified!!");
+	}
+}
+
+void QNode::move_traj()
+{
+	if( !is_traj_moving_ )
+	{
+		ROS_WARN("Start to moving");
+		is_traj_moving_ = true;
+	}
+	else
+	{
+		ROS_WARN("Stop to moving");
+		is_traj_moving_ = false;
+	}
+}
+
+void QNode::update_traj()
+{
+	if( traj_count_ < traj_.size() )
+	{
+		std::vector<double> tmp = traj_[traj_count_];
+		pos_sp_.position.x = tmp[0]; 
+		pos_sp_.position.y = tmp[1]; 
+		pos_sp_.position.z = tmp[2]; 
+		pos_sp_.yaw = tmp[3];
+		
+		dxl_des_.position[0] = tmp[4] * (180.0/3.14);
+		dxl_des_.position[1] = tmp[5] * (180.0/3.14);
+		traj_count_++;
 	}
 }
 

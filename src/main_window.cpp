@@ -14,7 +14,6 @@ ICSL_GCS::ICSL_GCS(int argc, char** argv, QWidget *parent)
 	ui.setupUi(this);
 
 	setWindowIcon(QIcon(":/images/ICSL.png"));
-    
 	QObject::connect(&qnode, SIGNAL(ros_shutdown()), this, SLOT(close()));
 	QObject::connect(&qnode, SIGNAL(emit_pushButton_connect_ros_color(bool)), 
 						  this, SLOT(set_pushButton_connect_ros_color(bool))); 
@@ -38,8 +37,11 @@ ICSL_GCS::ICSL_GCS(int argc, char** argv, QWidget *parent)
 						  this, SLOT(set_kill_switch_enabled(bool))); 
 	QObject::connect(&qnode, SIGNAL(emit_keyinput(int)), 
 						  this, SLOT(set_keyinput(int))); 
+	QObject::connect(&qnode, SIGNAL(emit_window_title(const char*)), 
+						  this, SLOT(set_window_title(const char*))); 
 
 	key_I = new QShortcut(Qt::Key_I, ui.centralwidget);
+	key_U = new QShortcut(Qt::Key_U, ui.centralwidget);
 	key_P = new QShortcut(Qt::Key_P, ui.centralwidget);
 	key_O = new QShortcut(Qt::Key_O, ui.centralwidget);
 	key_A = new QShortcut(Qt::Key_A, ui.centralwidget);
@@ -53,6 +55,7 @@ ICSL_GCS::ICSL_GCS(int argc, char** argv, QWidget *parent)
 	key_Space = new QShortcut(Qt::Key_Space, ui.centralwidget);
 	
 	QObject::connect( key_I, SIGNAL(activated()), this, SLOT(on_btn_I_pressed()) );
+	QObject::connect( key_U, SIGNAL(activated()), this, SLOT(on_btn_U_pressed()) );
 	QObject::connect( key_P, SIGNAL(activated()), this, SLOT(on_btn_P_pressed()) );
 	QObject::connect( key_O, SIGNAL(activated()), this, SLOT(on_btn_O_pressed()) );
 	QObject::connect( key_A, SIGNAL(activated()), this, SLOT(on_btn_A_pressed()) );
@@ -63,6 +66,7 @@ ICSL_GCS::ICSL_GCS(int argc, char** argv, QWidget *parent)
 	QObject::connect( key_X, SIGNAL(activated()), this, SLOT(on_btn_X_pressed()) );
 	QObject::connect( key_C, SIGNAL(activated()), this, SLOT(on_btn_C_pressed()) );
 	QObject::connect( key_V, SIGNAL(activated()), this, SLOT(on_btn_V_pressed()) );
+	QObject::connect( key_I, SIGNAL(activated()), this, SLOT(on_btn_I_pressed()) );
 	QObject::connect( key_Space, SIGNAL(activated()), this, SLOT(on_btn_Space_pressed()) );
 
 	setupGraph();
@@ -71,6 +75,7 @@ ICSL_GCS::ICSL_GCS(int argc, char** argv, QWidget *parent)
 ICSL_GCS::~ICSL_GCS()
 {
 	delete key_I;
+	delete key_U;
 	delete key_P;
 	delete key_O;
 	delete key_A;
@@ -298,47 +303,70 @@ void ICSL_GCS::set_keyinput(int key)
 {
 	switch( key )
 	{
-		case Key_I:
+		case KEY_I:
 			on_btn_I_pressed();
 		break;
-		case Key_P:
+		
+		case KEY_U:
+			on_btn_U_pressed();
+		break;
+
+		case KEY_P:
 			on_btn_P_pressed();
 		break;
-		case Key_O:
+		
+		case KEY_O:
 			on_btn_O_pressed();
 		break;
-		case Key_A:
+		
+		case KEY_A:
 			on_btn_A_pressed();
 		break;
-		case Key_D:
+		
+		case KEY_D:
 			on_btn_D_pressed();
 		break;
-		case Key_W:
+		
+		case KEY_W:
 			on_btn_W_pressed();
 		break;
-		case Key_S:
+		
+		case KEY_S:
 			on_btn_S_pressed();
 		break;
-		case Key_Z:
+		
+		case KEY_Z:
 			on_btn_Z_pressed();
 		break;
-		case Key_X:
+		
+		case KEY_X:
 			on_btn_X_pressed();
 		break;
-		case Key_C:
+		
+		case KEY_C:
 			on_btn_C_pressed();
 		break;
-		case Key_V:
+		
+		case KEY_V:
 			on_btn_V_pressed();
 		break;
-		case Key_Space:
-			//on_btn_Space_pressed();
+
+		case KEY_SPACE:
 			on_pushButton_arming_clicked();
+		break;
+		
+		case KEY_ENTER:
+			on_pushButton_flight_mode_clicked();
 		break;
 
 		default:
 		break;
 	}
+}
+
+void ICSL_GCS::set_window_title(const char* name)
+{
+	setWindowTitle(QApplication::translate("ICSL_GCS", name, 0, QApplication::UnicodeUTF8));
 }
 
 /** etcs **/

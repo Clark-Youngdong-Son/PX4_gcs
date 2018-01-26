@@ -47,13 +47,16 @@
 #define KEY_RIGHT 275
 #define KEY_LEFT 276
 
-//#define KEY_O 111	
-//#define KEY_P 112	
-//#define KEY_C 99	
-//#define KEY_V 118	
-//#define KEY_B 98	
-//#define KEY_N 110	
-//#define KEY_H 104	
+#define KEY_O 111	
+#define KEY_P 112	
+#define KEY_C 99	
+#define KEY_U 117	
+#define KEY_V 118	
+#define KEY_B 98	
+#define KEY_N 110	
+#define KEY_H 104
+#define KEY_X 120
+#define KEY_ENTER 13
 //#define ARMED -22
 //#define DISARMED -33
 

@@ -37,8 +37,9 @@ class ICSL_GCS : public QMainWindow
 		void set_thrust_setpoint(double, bool);
 		void set_kill_switch_enabled(bool);
 		void set_keyinput(int);
+		void set_window_title(const char*);
 
-		void on_btn_I_pressed(){ qnode.initialize_pos_setpoint(); }
+		//void on_btn_I_pressed(){ qnode.initialize_pos_setpoint(); }
 		void on_btn_P_pressed(){ qnode.move_setpoint( 2, true ); }
 		void on_btn_O_pressed(){ qnode.move_setpoint( 2, false ); }
 		void on_btn_A_pressed(){ qnode.move_setpoint( 1, true ); }
@@ -49,6 +50,8 @@ class ICSL_GCS : public QMainWindow
 		void on_btn_X_pressed(){ qnode.move_setpoint( 3, false ); }
 		void on_btn_C_pressed(){ qnode.start_control_service(); }
 		void on_btn_V_pressed(){ qnode.stop_control_service(); }
+		void on_btn_I_pressed(){ qnode.move_to_initial_traj(); }
+		void on_btn_U_pressed(){ qnode.move_traj(); }
 		void on_btn_Space_pressed();
 		
 		void on_pushButton_connect_ros_clicked(){ qnode.init(); }
@@ -69,6 +72,7 @@ class ICSL_GCS : public QMainWindow
 		DrawingModule* graph[25];
 		
 		QShortcut* key_I;
+		QShortcut* key_U;
 		QShortcut* key_P;
 		QShortcut* key_O;
 		QShortcut* key_A;

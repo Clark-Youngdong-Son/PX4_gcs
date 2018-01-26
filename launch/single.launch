@@ -1,8 +1,16 @@
 <?xml version="1.0"?>
 <launch>
+
+	<arg name="name" default="AM1"/>
+	<arg name="platform" default="pixhawk"/>
+	<arg name="navigation" default="vicon"/>
+	<arg name="traj" default=""/>
+
 	<node pkg="px4_gcs" type="px4_gcs" name="px4_gcs" output="screen" clear_params="true">
-		<param name="platform" type="string" value="pixhawk" />
-		<param name="navigation" type="string" value="vicon" />
+		<param name="name" type="string" value="$(arg name)" />
+		<param name="platform" type="string" value="$(arg platform)" />
+		<param name="navigation" type="string" value="$(arg navigation)" />
+		<param name="traj" type="string" value="$(arg traj)" />
 	</node>
 
 	<!--node pkg="rviz" type="rviz" name="rviz_gcs" output="screen" 

@@ -22,6 +22,7 @@
 #include <geometry_msgs/Quaternion.h>
 #include <geometry_msgs/PointStamped.h>
 #include <sensor_msgs/NavSatFix.h>
+#include <sensor_msgs/JointState.h>
 #include <nav_msgs/Odometry.h>
 #include <std_msgs/String.h>
 #include <std_msgs/Bool.h>
@@ -38,6 +39,8 @@
 #include "control_modes.h"
 
 #include <thread>
+#include <sstream>
+#include <fstream>
 
 #define PX4_LOSS_TIME 2.0
 
@@ -82,6 +85,9 @@ public:
 	void start_control_service();
 	void stop_control_service();
 
+	void move_to_initial_traj();
+	void move_traj();
+
 Q_SIGNALS:
     // quit
 	void ros_shutdown();
@@ -98,6 +104,7 @@ Q_SIGNALS:
 	void emit_thrust_setpoint(double, bool);
 	void emit_kill_switch_enabled(bool);
 	void emit_keyinput(int);
+	void emit_window_title(const char*);
 
 private:
 	int init_argc;
@@ -114,15 +121,19 @@ private:
 	void odom_cb(const nav_msgs::Odometry::ConstPtr &);
 	void imu_cb(const sensor_msgs::Imu::ConstPtr &);
 	void key_cb(const keyboard::Key::ConstPtr &);
+	void dxl_cb(const sensor_msgs::JointState::ConstPtr &);
 
 	/** current states **/
 	mavros_msgs::State px4_state_;
 	nav_msgs::Odometry odom_;
-	
+	sensor_msgs::JointState dxl_cur_;
+	bool dxl_subscribed_ = false;
+
 	/** publisher **/
-	ros::Publisher pub_[2];
+	ros::Publisher pub_[3];
 	mavros_msgs::PositionTarget pos_sp_;
-	
+	sensor_msgs::JointState dxl_des_;
+
 	/** service client **/
 	ros::ServiceClient srv_client_[4];
 	// 0 : arming, 1 : flight mode change (get authority),
@@ -147,6 +158,13 @@ private:
 	NavigationCode navigation_code_;
 	bool is_vicon(){ return navigation_code_ == VICON; }
 	bool is_msf(){ return navigation_code_ == MSF; }
+
+	bool load_traj_from_file( std::string dir );
+	int traj_count_ = 0;
+	bool is_traj_loaded_ = false;
+	bool is_traj_moving_ = false;
+	std::vector< std::vector<double> > traj_;
+	void update_traj();
 };
 
 // utility functions
