@@ -124,7 +124,7 @@ bool QNode::init()
 		pub_[0] = n.advertise<mavros_msgs::PositionTarget>("gcs/setpoint_raw/position", 10);
 		if( is_pixhawk() )
 			pub_[1] = n.advertise<mavros_msgs::OverrideRCIn>("mavros/rc/override", 10);
-
+		pub_[2] = n.advertise<keyboard::Key>("keyboard/keydown", 10);
 		// Services
 		if( is_pixhawk() )
 		{
@@ -710,6 +710,7 @@ void q2e(const double q0, const double q1, const double q2, const double q3,
 	pitch = atan2(-2*(q1*q3-q0*q2),sqrt((2*(q2*q3+q0*q1))*(2*(q2*q3+q0*q1))+(q0*q0-q1*q1-q2*q2+q3*q3)*(q0*q0-q1*q1-q2*q2+q3*q3)));
 	yaw = atan2(2*(q1*q2+q0*q3),q0*q0+q1*q1-q2*q2-q3*q3);
 }
+
 void q2e(const geometry_msgs::Quaternion q, double& roll, double& pitch, double& yaw)
 {
 	double ysqr = q.y * q.y;
@@ -726,6 +727,22 @@ void q2e(const geometry_msgs::Quaternion q, double& roll, double& pitch, double&
 	double t3 = 2.0 * (q.w * q.z + q.x * q.y);
 	double t4 = 1.0 - 2.0 * (ysqr + q.z * q.z);
 	yaw = std::atan2(t3, t4);
+}
+
+void QNode::mpcSwitch(bool flag)
+{
+	if(flag)
+	{
+		keyboard::Key key_msg;
+		key_msg.code = key_msg.KEY_m;
+		pub_[2].publish(key_msg);
+	}
+	else
+	{
+		keyboard::Key key_msg;
+		key_msg.code = key_msg.KEY_COMMA;
+		pub_[2].publish(key_msg);
+	}
 }
 
 }  // namespace px4_gcs

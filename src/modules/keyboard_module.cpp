@@ -22,6 +22,10 @@ KeyboardModule::KeyboardModule( QWidget* _widget, QObject* _object )
 	key7 = new QShortcut(Qt::Key_D, widget);
 	key8 = new QShortcut(Qt::Key_W, widget);
 	key9 = new QShortcut(Qt::Key_S, widget);
+
+	//mpc
+	key10 = new QShortcut(Qt::Key_M, widget);
+	key11 = new QShortcut(Qt::Key_Comma, widget);
 }
 
 KeyboardModule::~KeyboardModule()
@@ -31,6 +35,12 @@ KeyboardModule::~KeyboardModule()
 	delete key3;
 	delete key4;
 	delete key5;
+	delete key6;
+	delete key7;
+	delete key8;
+	delete key9;
+	delete key10;
+	delete key11;
 	delete widget;
 	delete node;
 }
@@ -46,6 +56,8 @@ void KeyboardModule::connect()
 	QObject::connect( key7, SIGNAL(activated()), node, SLOT(on_btn_D_pressed()) );
 	QObject::connect( key8, SIGNAL(activated()), node, SLOT(on_btn_W_pressed()) );
 	QObject::connect( key9, SIGNAL(activated()), node, SLOT(on_btn_S_pressed()) );
+	QObject::connect( key10, SIGNAL(activated()), node, SLOT(on_btn_M_pressed()) );
+	QObject::connect( key11, SIGNAL(activated()), node, SLOT(on_btn_Comma_pressed()) );
 }
 
 void KeyboardModule::log( const string msg )

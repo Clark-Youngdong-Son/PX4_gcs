@@ -35,6 +35,9 @@
 // for rate_controller
 #include "control_modes.h"
 
+// for mpc
+#include <keyboard/Key.h>
+
 #include <thread>
 
 #define PX4_LOSS_TIME 2.0
@@ -80,6 +83,9 @@ public:
 	void start_control_service();
 	void stop_control_service();
 
+	//mpc
+	void mpcSwitch(bool);
+
 Q_SIGNALS:
     // quit
 	void ros_shutdown();
@@ -116,7 +122,7 @@ private:
 	nav_msgs::Odometry odom_;
 	
 	/** publisher **/
-	ros::Publisher pub_[2];
+	ros::Publisher pub_[3];
 	mavros_msgs::PositionTarget pos_sp_;
 	
 	/** service client **/
