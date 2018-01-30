@@ -1,7 +1,0 @@
-<?xml version="1.0"?>
-<launch>
-	<node pkg="rqt_gui" type="rqt_gui" name="msf_gcs" output="screen"
-		clear_params="true" 
-		args="--perspective-file $(find px4_gcs)/msf.perspective">
-	</node>
-</launch>
