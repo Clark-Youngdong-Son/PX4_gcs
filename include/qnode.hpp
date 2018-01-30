@@ -39,18 +39,6 @@
 
 #define PX4_LOSS_TIME 2.0
 
-enum PlatformCode
-{
-	PIXHAWK = 0,
-	DJI = 1
-};
-
-enum NavigationCode
-{
-	VICON = 0,
-	MSF = 1
-};
-
 namespace px4_gcs 
 {
 
@@ -135,14 +123,6 @@ private:
 	bool control_flag_ = false;
 
 	void override_kill_switch();
-
-	PlatformCode platform_code_;
-	bool is_pixhawk(){ return platform_code_ == PIXHAWK; }
-	bool is_dji(){ return platform_code_ == DJI; }
-
-	NavigationCode navigation_code_;
-	bool is_vicon(){ return navigation_code_ == VICON; }
-	bool is_msf(){ return navigation_code_ == MSF; }
 };
 
 // utility functions

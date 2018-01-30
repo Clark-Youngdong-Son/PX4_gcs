@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<launch>
+	<node pkg="px4_gcs" type="px4_gcs" name="px4_gcs" output="screen" clear_params="true">
+	</node>
+</launch>
