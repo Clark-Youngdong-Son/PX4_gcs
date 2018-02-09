@@ -67,7 +67,7 @@ bool QNode::init()
 				navigation_code_ = VICON;
 				ROS_WARN("Navigation system is [vicon]");
 			}
-			else if( platform == "msf")
+			else if( navigation == "msf")
 			{
 				navigation_code_ = MSF;
 				ROS_WARN("Navigation system is [msf]");
@@ -612,8 +612,8 @@ void QNode::imu_cb(const sensor_msgs::Imu::ConstPtr &msg)
 {
 	if(init_flag_)
 	{
-		if( msg->header.seq % 10 == 0)
-		{
+		//if( msg->header.seq % 10 == 0)
+		//{
 			double* buf = (double*)malloc(7*sizeof(double));
 			buf[0] = now();
 	
@@ -639,7 +639,7 @@ void QNode::imu_cb(const sensor_msgs::Imu::ConstPtr &msg)
 			buf[6] = (180.0/3.14)*euler_rate(2,0);
 	
 			Q_EMIT emit_imu_state( buf );
-		}
+		//}
 	}
 }
 
