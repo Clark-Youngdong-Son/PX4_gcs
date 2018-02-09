@@ -12,6 +12,7 @@
 
 #include "modules/drawing_module.h"
 #include "control_modes.h"
+#include "mocap_types.h"
 
 namespace px4_gcs 
 {
@@ -59,6 +60,8 @@ class ICSL_GCS : public QMainWindow
 		void on_pushButton_mode_traj_clicked(){ qnode.set_ctrl_mode( TRAJECTORY ); };
 		void on_pushButton_mode_yaw_clicked(){ qnode.set_ctrl_mode( YAW ); };
 		void on_pushButton_mode_yaw_rate_clicked(){ qnode.set_ctrl_mode( YAWRATE ); };
+		void on_pushButton_mode_vicon_clicked(){ qnode.set_mocap_type( VICON ); };
+		void on_pushButton_mode_vision_clicked(){ qnode.set_mocap_type( VISION ); };
 
 	private:
 		Ui::ICSL_GCS ui;

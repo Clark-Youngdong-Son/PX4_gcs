@@ -35,6 +35,8 @@
 // for rate_controller
 #include "control_modes.h"
 
+#include "mocap_types.h"
+
 #include <thread>
 
 #define PX4_LOSS_TIME 2.0
@@ -59,6 +61,7 @@ public:
 	void set_offboard();
 	void set_manual();
 	void set_ctrl_mode( ControlModes mode );
+	void set_mocap_type( MocapTypes type );
 	
 	// Keyboard interaction
 	void move_setpoint(int, bool);
@@ -104,7 +107,7 @@ private:
 	nav_msgs::Odometry odom_;
 	
 	/** publisher **/
-	ros::Publisher pub_[2];
+	ros::Publisher pub_[3];
 	mavros_msgs::PositionTarget pos_sp_;
 	
 	/** service client **/
@@ -121,6 +124,7 @@ private:
 	double px4_timer_ = 0.0;
 	bool emergency_stop_ = false;
 	bool control_flag_ = false;
+	bool mocap_type_flag_ = true;
 
 	void override_kill_switch();
 };

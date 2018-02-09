@@ -50,6 +50,7 @@ bool QNode::init()
 		// Publication
 		pub_[0] = n.advertise<mavros_msgs::PositionTarget>("gcs/setpoint_raw/position", 10);
 		pub_[1] = n.advertise<mavros_msgs::OverrideRCIn>("mavros/rc/override", 10);
+		pub_[2] = n.advertise<std_msgs::Bool>("px4_gcs/mocapType", 10);
 			//// pixhawk
 		srv_client_[0] = n.serviceClient<mavros_msgs::CommandBool>
 			("mavros/cmd/arming");
@@ -265,6 +266,20 @@ void QNode::set_ctrl_mode( ControlModes mode )
 	}
 }
 
+void QNode::set_mocap_type( MocapTypes type )
+{
+	std_msgs::Bool mocap_type;
+	if(type==VICON)
+	{
+		mocap_type.data = true;
+	}
+	else if(type==VISION)
+	{
+		mocap_type.data = false;
+	}
+	pub_[2].publish(mocap_type);
+	start_control_service();
+}
 void QNode::move_setpoint(int idx, bool increase)
 {	// idx : x, y, z, yaw
 	// tf : true -> increase / false -> decrease
