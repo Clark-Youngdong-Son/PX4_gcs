@@ -38,8 +38,8 @@ bool QNode::init()
 		sub_[0] = n.subscribe<mavros_msgs::AttitudeTarget>
 			("mavros/setpoint_raw/attitude",10,&QNode::att_sp_cb,this);
 		sub_[1] = n.subscribe<nav_msgs::Odometry>
-			("mavros/local_position/odom",10,&QNode::odom_cb,this);
-			//("vicon/odometry",10,&QNode::odom_cb,this);
+			//("mavros/local_position/odom",10,&QNode::odom_cb,this);
+			("/AM3/vicon/odometry",10,&QNode::odom_cb,this);
 		
 		sub_[2] = n.subscribe<mavros_msgs::State>
 			("mavros/state",10,&QNode::px4_state_cb,this);
@@ -134,7 +134,20 @@ void QNode::run()
 			if( init_pos_sp_ )
 			{	// publish setpoint
 				pos_sp_.header.stamp = ros::Time::now();
-				pub_[0].publish( pos_sp_ );	
+				if(flight_type_flag_)
+				{
+					pub_[0].publish( pos_sp_ );	
+				}
+				else
+				{
+					double t_now = (ros::WallTime::now() - t_circle_init_).toSec();
+					double pi = 3.14;
+					pos_sp_.position.x = circle_center_(0) + radius*sinf(2*pi*frequency*t_now);
+					pos_sp_.position.y = circle_center_(1) - radius*cosf(2*pi*frequency*t_now);
+					pos_sp_.position.z = circle_center_(2);
+					pos_sp_.yaw = yaw_circle_init_;
+					pub_[0].publish( pos_sp_ );	
+				}
 				
 				double* buf = (double*)malloc(9*sizeof(double));	
 				buf[1] = pos_sp_.position.x;
@@ -280,6 +293,28 @@ void QNode::set_mocap_type( MocapTypes type )
 	pub_[2].publish(mocap_type);
 	start_control_service();
 }
+
+void QNode::set_flight_type( FlightTypes type )
+{
+	if(type == KEYBOARD)
+	{
+		flight_type_flag_old_ = flight_type_flag_;
+		flight_type_flag_ = true;
+	}
+	else if(type == CIRCLE)
+	{
+		flight_type_flag_old_ = flight_type_flag_;
+		flight_type_flag_ = false;
+		if(flight_type_flag_old_)
+		{
+			t_circle_init_ = ros::WallTime::now();
+			circle_center_(0) = odom_.pose.pose.position.x;
+			circle_center_(1) = odom_.pose.pose.position.y + radius;
+			circle_center_(2) = odom_.pose.pose.position.z;
+		}
+	}
+}
+
 void QNode::move_setpoint(int idx, bool increase)
 {	// idx : x, y, z, yaw
 	// tf : true -> increase / false -> decrease

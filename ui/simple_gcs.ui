@@ -991,9 +991,9 @@ STOP</string>
    <widget class="QPushButton" name="pushButton_mode_vicon">
     <property name="geometry">
      <rect>
-      <x>70</x>
+      <x>10</x>
       <y>530</y>
-      <width>311</width>
+      <width>261</width>
       <height>61</height>
      </rect>
     </property>
@@ -1012,9 +1012,9 @@ STOP</string>
    <widget class="QPushButton" name="pushButton_mode_vision">
     <property name="geometry">
      <rect>
-      <x>490</x>
+      <x>280</x>
       <y>530</y>
-      <width>311</width>
+      <width>261</width>
       <height>61</height>
      </rect>
     </property>
@@ -1030,6 +1030,48 @@ STOP</string>
      <string>Vision</string>
     </property>
    </widget>
+   <widget class="QPushButton" name="pushButton_mode_keyboard">
+    <property name="geometry">
+     <rect>
+      <x>550</x>
+      <y>530</y>
+      <width>261</width>
+      <height>61</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>20</pointsize>
+      <weight>50</weight>
+      <italic>false</italic>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Keyboard</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_mode_circle">
+    <property name="geometry">
+     <rect>
+      <x>820</x>
+      <y>530</y>
+      <width>261</width>
+      <height>61</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>20</pointsize>
+      <weight>50</weight>
+      <italic>false</italic>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Circle</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -1037,7 +1079,7 @@ STOP</string>
      <x>0</x>
      <y>0</y>
      <width>1090</width>
-     <height>25</height>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuICSL_GCS">

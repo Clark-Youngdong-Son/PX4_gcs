@@ -36,10 +36,13 @@
 #include "control_modes.h"
 
 #include "mocap_types.h"
+#include "flight_types.h"
 
 #include <thread>
 
 #define PX4_LOSS_TIME 2.0
+
+using namespace Eigen;
 
 namespace px4_gcs 
 {
@@ -62,6 +65,7 @@ public:
 	void set_manual();
 	void set_ctrl_mode( ControlModes mode );
 	void set_mocap_type( MocapTypes type );
+	void set_flight_type( FlightTypes type );
 	
 	// Keyboard interaction
 	void move_setpoint(int, bool);
@@ -93,6 +97,7 @@ private:
 	double now(){ return (ros::Time::now() - t_init_).toSec(); }
 
 	ros::Time t_init_;
+	ros::WallTime t_circle_init_;
 
 	/** subscriber and callbacks **/
 	ros::Subscriber sub_[10];
@@ -125,6 +130,14 @@ private:
 	bool emergency_stop_ = false;
 	bool control_flag_ = false;
 	bool mocap_type_flag_ = true;
+	bool flight_type_flag_ = true;
+	bool flight_type_flag_old_ = true;
+
+	/** variables for circular flight **/
+	Vector3d circle_center_ = Vector3d::Zero();
+	double yaw_circle_init_ = 0.0;
+	double radius = 1.0;
+	double frequency = 0.1;
 
 	void override_kill_switch();
 };

@@ -13,6 +13,7 @@
 #include "modules/drawing_module.h"
 #include "control_modes.h"
 #include "mocap_types.h"
+#include "flight_types.h"
 
 namespace px4_gcs 
 {
@@ -62,6 +63,8 @@ class ICSL_GCS : public QMainWindow
 		void on_pushButton_mode_yaw_rate_clicked(){ qnode.set_ctrl_mode( YAWRATE ); };
 		void on_pushButton_mode_vicon_clicked(){ qnode.set_mocap_type( VICON ); };
 		void on_pushButton_mode_vision_clicked(){ qnode.set_mocap_type( VISION ); };
+		void on_pushButton_mode_keyboard_clicked(){ qnode.set_flight_type( KEYBOARD ); };
+		void on_pushButton_mode_circle_clicked(){ qnode.set_flight_type( CIRCLE ); };
 
 	private:
 		Ui::ICSL_GCS ui;
