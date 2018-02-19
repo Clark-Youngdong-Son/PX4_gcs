@@ -50,6 +50,7 @@ bool QNode::init()
 		// Publication
 		pub_[0] = n.advertise<mavros_msgs::PositionTarget>("gcs/setpoint_raw/position", 10);
 		pub_[1] = n.advertise<mavros_msgs::OverrideRCIn>("mavros/rc/override", 10);
+		mpc_command_pub_ = n.advertise<keyboard::Key>("keyboard/keydown", 10);
 			//// pixhawk
 		srv_client_[0] = n.serviceClient<mavros_msgs::CommandBool>
 			("mavros/cmd/arming");
@@ -346,6 +347,24 @@ void QNode::stop_control_service()
 	srv_client_[3].call( stop );
 	init_pos_sp_ = false;
 	control_flag_ = false;
+}
+
+void QNode::start_mpc_service(int command)
+{
+	static keyboard::Key keyCommand;
+	if(command==0)
+	{
+		keyCommand.code = keyCommand.KEY_m;
+	}
+	else if(command==1)
+	{
+		keyCommand.code = keyCommand.KEY_COMMA;
+	}
+	else if(command==2)
+	{
+		keyCommand.code = keyCommand.KEY_n;
+	}
+	mpc_command_pub_.publish(keyCommand);
 }
 
 /** subscription callbacks **/

@@ -35,6 +35,9 @@
 // for rate_controller
 #include "control_modes.h"
 
+// for mpc
+#include <keyboard/Key.h>
+
 #include <thread>
 
 #define PX4_LOSS_TIME 2.0
@@ -67,6 +70,7 @@ public:
 	void initialize_pos_setpoint();
 	void start_control_service();
 	void stop_control_service();
+	void start_mpc_service(int);
 
 Q_SIGNALS:
     // quit
@@ -105,6 +109,7 @@ private:
 	
 	/** publisher **/
 	ros::Publisher pub_[2];
+	ros::Publisher mpc_command_pub_;
 	mavros_msgs::PositionTarget pos_sp_;
 	
 	/** service client **/
