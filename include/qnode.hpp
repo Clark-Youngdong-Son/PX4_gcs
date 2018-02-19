@@ -135,9 +135,9 @@ private:
 
 	/** variables for circular flight **/
 	Vector3d circle_center_ = Vector3d::Zero();
-	double yaw_circle_init_ = 0.0;
 	double radius = 1.0;
-	double frequency = 0.1;
+	double frequency = 0.05;
+	double yaw_circle_ = 0.0;
 
 	void override_kill_switch();
 };

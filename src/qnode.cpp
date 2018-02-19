@@ -38,8 +38,8 @@ bool QNode::init()
 		sub_[0] = n.subscribe<mavros_msgs::AttitudeTarget>
 			("mavros/setpoint_raw/attitude",10,&QNode::att_sp_cb,this);
 		sub_[1] = n.subscribe<nav_msgs::Odometry>
-			//("mavros/local_position/odom",10,&QNode::odom_cb,this);
-			("/AM3/vicon/odometry",10,&QNode::odom_cb,this);
+			//("mavros/local_position/odom",10,&QNode::odom_cb,this); //SITL
+			("vicon/odometry",10,&QNode::odom_cb,this); //Experiment
 		
 		sub_[2] = n.subscribe<mavros_msgs::State>
 			("mavros/state",10,&QNode::px4_state_cb,this);
@@ -145,7 +145,11 @@ void QNode::run()
 					pos_sp_.position.x = circle_center_(0) + radius*sinf(2*pi*frequency*t_now);
 					pos_sp_.position.y = circle_center_(1) - radius*cosf(2*pi*frequency*t_now);
 					pos_sp_.position.z = circle_center_(2);
-					pos_sp_.yaw = yaw_circle_init_;
+					pos_sp_.velocity.x = 0.0;
+					pos_sp_.velocity.y = 0.0;
+					pos_sp_.velocity.z = 0.0;
+					pos_sp_.yaw = yaw_circle_;
+					pos_sp_.yaw_rate = 0.0;
 					pub_[0].publish( pos_sp_ );	
 				}
 				
@@ -300,6 +304,15 @@ void QNode::set_flight_type( FlightTypes type )
 	{
 		flight_type_flag_old_ = flight_type_flag_;
 		flight_type_flag_ = true;
+		double roll, pitch, yaw;
+		q2e( odom_.pose.pose.orientation, roll, pitch, yaw);
+		
+		pos_sp_.position = odom_.pose.pose.position;
+		pos_sp_.velocity.x = 0.0;
+		pos_sp_.velocity.y = 0.0;
+		pos_sp_.velocity.z = 0.0;
+		pos_sp_.yaw = yaw;
+		pos_sp_.yaw_rate = 0.0;
 	}
 	else if(type == CIRCLE)
 	{
@@ -311,6 +324,12 @@ void QNode::set_flight_type( FlightTypes type )
 			circle_center_(0) = odom_.pose.pose.position.x;
 			circle_center_(1) = odom_.pose.pose.position.y + radius;
 			circle_center_(2) = odom_.pose.pose.position.z;
+
+			double roll, pitch;
+			q2e( odom_.pose.pose.orientation, roll, pitch, yaw_circle_);
+		
+			pos_sp_.yaw = yaw_circle_;
+			pos_sp_.yaw_rate = 0.0;
 		}
 	}
 }
