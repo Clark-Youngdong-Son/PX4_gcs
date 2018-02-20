@@ -355,14 +355,18 @@ void QNode::start_mpc_service(int command)
 	if(command==0)
 	{
 		keyCommand.code = keyCommand.KEY_m;
+		std_srvs::SetBool start;
 	}
 	else if(command==1)
 	{
 		keyCommand.code = keyCommand.KEY_COMMA;
+		initialize_pos_setpoint();
+		start_control_service();
 	}
 	else if(command==2)
 	{
 		keyCommand.code = keyCommand.KEY_n;
+		stop_control_service();
 	}
 	mpc_command_pub_.publish(keyCommand);
 }
