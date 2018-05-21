@@ -409,7 +409,7 @@ void QNode::odom_cb(const nav_msgs::Odometry::ConstPtr &msg)
 
 	if(init_flag_)
 	{
-		if( (msg->header.seq % 3) == 0 )
+		if( (msg->header.seq % 10) == 0 )
 		{
 			double roll, pitch, yaw;
 			q2e( msg->pose.pose.orientation, roll, pitch, yaw);
