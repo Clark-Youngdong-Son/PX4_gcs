@@ -366,7 +366,8 @@ void QNode::start_mpc_service(int command)
 	else if(command==2)
 	{
 		keyCommand.code = keyCommand.KEY_n;
-		stop_control_service();
+		init_pos_sp_ =false;
+		//stop_control_service();
 	}
 	mpc_command_pub_.publish(keyCommand);
 }
