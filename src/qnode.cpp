@@ -145,8 +145,8 @@ void QNode::run()
 					pos_sp_.position.x = circle_center_(0) + radius*sinf(2*pi*frequency*t_now);
 					pos_sp_.position.y = circle_center_(1) - radius*cosf(2*pi*frequency*t_now);
 					pos_sp_.position.z = circle_center_(2);
-					pos_sp_.velocity.x = 0.0;
-					pos_sp_.velocity.y = 0.0;
+					pos_sp_.velocity.x =  2*pi*frequency*radius*cosf(2*pi*frequency*t_now);
+					pos_sp_.velocity.y =  2*pi*frequency*radius*sinf(2*pi*frequency*t_now);
 					pos_sp_.velocity.z = 0.0;
 					pos_sp_.yaw = yaw_circle_;
 					pos_sp_.yaw_rate = 0.0;
