@@ -52,6 +52,7 @@ ICSL_GCS::ICSL_GCS(int argc, char** argv, QWidget *parent)
 	key_M = new QShortcut(Qt::Key_M, ui.centralwidget);
 	key_COMMA = new QShortcut(Qt::Key_Comma, ui.centralwidget);
 	key_N = new QShortcut(Qt::Key_N, ui.centralwidget);
+	key_B = new QShortcut(Qt::Key_B, ui.centralwidget);
 	
 	QObject::connect( key_I, SIGNAL(activated()), this, SLOT(on_btn_I_pressed()) );
 	QObject::connect( key_P, SIGNAL(activated()), this, SLOT(on_btn_P_pressed()) );
@@ -68,6 +69,7 @@ ICSL_GCS::ICSL_GCS(int argc, char** argv, QWidget *parent)
 	QObject::connect( key_M, SIGNAL(activated()), this, SLOT(on_btn_M_pressed()) );
 	QObject::connect( key_COMMA, SIGNAL(activated()), this, SLOT(on_btn_COMMA_pressed()) );
 	QObject::connect( key_N, SIGNAL(activated()), this, SLOT(on_btn_N_pressed()) );
+	QObject::connect( key_B, SIGNAL(activated()), this, SLOT(on_btn_B_pressed()) );
 
 	setupGraph();
 }
@@ -85,6 +87,8 @@ ICSL_GCS::~ICSL_GCS()
 	delete key_X;
 	delete key_C;
 	delete key_V;
+	delete key_N;
+	delete key_B;
 }
 
 /** pushButton **/

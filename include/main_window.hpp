@@ -50,6 +50,7 @@ class ICSL_GCS : public QMainWindow
 		void on_btn_M_pressed(){ qnode.start_mpc_service(0); }
 		void on_btn_COMMA_pressed(){ qnode.start_mpc_service(1); }
 		void on_btn_N_pressed(){ qnode.start_mpc_service(2); }
+		void on_btn_B_pressed(){ qnode.start_mpc_service(3); }
 		////void on_btn_Space_pressed();
 		
 		void on_pushButton_connect_ros_clicked(){ qnode.init(); }
@@ -84,6 +85,7 @@ class ICSL_GCS : public QMainWindow
 		QShortcut* key_M;
 		QShortcut* key_COMMA;
 		QShortcut* key_N;
+		QShortcut* key_B;
 
 		void setupGraph();
 };

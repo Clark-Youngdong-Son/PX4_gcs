@@ -38,8 +38,8 @@ bool QNode::init()
 		sub_[0] = n.subscribe<mavros_msgs::AttitudeTarget>
 			("mavros/setpoint_raw/attitude",10,&QNode::att_sp_cb,this);
 		sub_[1] = n.subscribe<nav_msgs::Odometry>
-			("mavros/local_position/odom",10,&QNode::odom_cb,this);
-			//("vicon/odometry",10,&QNode::odom_cb,this);
+			//("mavros/local_position/odom",10,&QNode::odom_cb,this);
+			("vicon/vehicle_odometry",10,&QNode::odom_cb,this);
 		
 		sub_[2] = n.subscribe<mavros_msgs::State>
 			("mavros/state",10,&QNode::px4_state_cb,this);
@@ -361,13 +361,17 @@ void QNode::start_mpc_service(int command)
 	{
 		keyCommand.code = keyCommand.KEY_COMMA;
 		initialize_pos_setpoint();
-		start_control_service();
+		//start_control_service();
 	}
 	else if(command==2)
 	{
 		keyCommand.code = keyCommand.KEY_n;
 		init_pos_sp_ =false;
 		//stop_control_service();
+	}
+	else if(command==3)
+	{
+		keyCommand.code = keyCommand.KEY_b;
 	}
 	mpc_command_pub_.publish(keyCommand);
 }
@@ -451,14 +455,17 @@ void QNode::odom_cb(const nav_msgs::Odometry::ConstPtr &msg)
 			buf[2] = msg->pose.pose.position.y;
 			buf[3] = msg->pose.pose.position.z;
 		
-			Eigen::Matrix<double,3,1> v_b;
-			v_b(0,0) = msg->twist.twist.linear.x;
-			v_b(1,0) = msg->twist.twist.linear.y;
-			v_b(2,0) = msg->twist.twist.linear.z;
-			Eigen::Matrix<double,3,1> v = R*v_b; // this is now pos_rate
-			buf[4] = v(0,0); 
-			buf[5] = v(1,0);
-			buf[6] = v(2,0);
+			//Eigen::Matrix<double,3,1> v_b;
+			//v_b(0,0) = msg->twist.twist.linear.x;
+			//v_b(1,0) = msg->twist.twist.linear.y;
+			//v_b(2,0) = msg->twist.twist.linear.z;
+			//Eigen::Matrix<double,3,1> v = R*v_b; // this is now pos_rate
+			//buf[4] = v(0,0); 
+			//buf[5] = v(1,0);
+			//buf[6] = v(2,0);
+			buf[4] = msg->twist.twist.linear.x;
+			buf[5] = msg->twist.twist.linear.y;
+			buf[6] = msg->twist.twist.linear.z;
 
 			buf[7] = roll*(180.0/3.14);
 			buf[8] = pitch*(180.0/3.14);
