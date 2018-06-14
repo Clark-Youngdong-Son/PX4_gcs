@@ -142,11 +142,19 @@ void QNode::run()
 				{
 					double t_now = (ros::WallTime::now() - t_circle_init_).toSec();
 					double pi = 3.14;
-					pos_sp_.position.x = circle_center_(0) + radius*sinf(2*pi*frequency*t_now);
-					pos_sp_.position.y = circle_center_(1) - radius*cosf(2*pi*frequency*t_now);
+					//pos_sp_.position.x = circle_center_(0) + radius*sinf(2*pi*frequency*t_now);
+					//pos_sp_.position.y = circle_center_(1) - radius*cosf(2*pi*frequency*t_now);
+					//pos_sp_.position.x = circle_center_(0) + 1.25*sinf(2*pi*frequency*t_now);
+					//pos_sp_.position.y = circle_center_(1) - 1.25*cosf(2*pi*frequency*t_now);
+					//pos_sp_.position.z = circle_center_(2);
+					//pos_sp_.velocity.x =  2*pi*frequency*1.25*cosf(2*pi*frequency*t_now);
+					//pos_sp_.velocity.y =  2*pi*frequency*1.25*sinf(2*pi*frequency*t_now);
+					//pos_sp_.velocity.z = 0.0;
+					pos_sp_.position.x = circle_center_(0) - 1.25*cosf(2*pi*frequency*t_now);
+					pos_sp_.position.y = circle_center_(1);
 					pos_sp_.position.z = circle_center_(2);
-					pos_sp_.velocity.x =  2*pi*frequency*radius*cosf(2*pi*frequency*t_now);
-					pos_sp_.velocity.y =  2*pi*frequency*radius*sinf(2*pi*frequency*t_now);
+					pos_sp_.velocity.x =  2*pi*frequency*1.25*sinf(2*pi*frequency*t_now);
+					pos_sp_.velocity.y =  0.0;
 					pos_sp_.velocity.z = 0.0;
 					pos_sp_.yaw = yaw_circle_;
 					pos_sp_.yaw_rate = 0.0;
@@ -321,8 +329,12 @@ void QNode::set_flight_type( FlightTypes type )
 		if(flight_type_flag_old_)
 		{
 			t_circle_init_ = ros::WallTime::now();
-			circle_center_(0) = odom_.pose.pose.position.x;
-			circle_center_(1) = odom_.pose.pose.position.y + radius;
+			//circle_center_(0) = odom_.pose.pose.position.x;
+			//circle_center_(1) = odom_.pose.pose.position.y + radius;
+			//circle_center_(1) = odom_.pose.pose.position.y + 1.25;
+			//circle_center_(2) = odom_.pose.pose.position.z;
+			circle_center_(0) = odom_.pose.pose.position.x + 1.25;
+			circle_center_(1) = odom_.pose.pose.position.y;
 			circle_center_(2) = odom_.pose.pose.position.z;
 
 			double roll, pitch;
