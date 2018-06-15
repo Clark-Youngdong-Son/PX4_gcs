@@ -47,6 +47,8 @@ bool QNode::init()
 			("mavros/rc/in",10,&QNode::rc_in_cb,this);
 		sub_[4] = n.subscribe<sensor_msgs::Imu>
 			("mavros/imu/data", 10, &QNode::imu_cb, this);
+		sub_[5] = n.subscribe<geometry_msgs::Point>
+			("object", 10, &QNode::landing_cb, this);
 		// Publication
 		pub_[0] = n.advertise<mavros_msgs::PositionTarget>("gcs/setpoint_raw/position", 10);
 		pub_[1] = n.advertise<mavros_msgs::OverrideRCIn>("mavros/rc/override", 10);
@@ -426,8 +428,8 @@ void QNode::att_sp_cb(const mavros_msgs::AttitudeTarget::ConstPtr &msg)
 		buf[5] = (180.0/3.14)*msg->body_rate.z;
 		buf[0] = now();
 		
-		Q_EMIT emit_attitude_setpoint( buf, (msg->header.seq % 10) == 0 );
-		Q_EMIT emit_thrust_setpoint( msg->thrust, (msg->header.seq % 10) == 0 );
+		Q_EMIT emit_attitude_setpoint( buf, (msg->header.seq % 5) == 0 );
+		Q_EMIT emit_thrust_setpoint( msg->thrust, (msg->header.seq % 5) == 0 );
 	}
 }
 
@@ -441,6 +443,7 @@ void QNode::odom_cb(const nav_msgs::Odometry::ConstPtr &msg)
 		{
 			double roll, pitch, yaw;
 			q2e( msg->pose.pose.orientation, roll, pitch, yaw);
+			yaw_ = yaw;
 			
 			Eigen::Quaternion<double> q;
 			q.w() = msg->pose.pose.orientation.w;
@@ -480,6 +483,7 @@ void QNode::odom_cb(const nav_msgs::Odometry::ConstPtr &msg)
 
 void QNode::imu_cb(const sensor_msgs::Imu::ConstPtr &msg)
 {
+	imu_ = *msg;
 	if(init_flag_)
 	{
 		if( msg->header.seq % 10 == 0)
@@ -511,6 +515,58 @@ void QNode::imu_cb(const sensor_msgs::Imu::ConstPtr &msg)
 			Q_EMIT emit_imu_state( buf );
 		}
 	}
+}
+
+void QNode::landing_cb(const geometry_msgs::Point::ConstPtr &msg)
+{
+	//Intel realsense parameter
+	static double width = 640.0, height = 480.0;
+	static double fx = 614.21, fy = 619.49;
+
+	static int u, v;
+	u = msg->x;
+	v = msg->y;
+
+	//NWU frame
+	static double x_pixel, y_pixel, z_pixel;
+	x_pixel = +(height/2.0) - v;
+	y_pixel = (width/2.0) - u;
+	z_pixel = -(fx+fy)/2.0;
+
+	static double R[3][3];
+	static double r, p, y;
+	q2e( imu_.orientation, r, p, y);
+	y = yaw_;
+    R[0][0] = cos(p)*cos(y);
+    R[0][1] = cos(y)*sin(p)*sin(r)-cos(r)*sin(y);
+    R[0][2] = sin(r)*sin(y)+cos(r)*cos(y)*sin(p);
+    R[1][0] = cos(p)*sin(y);
+    R[1][1] = cos(r)*cos(y)+sin(p)*sin(r)*sin(y);
+    R[1][2] = cos(r)*sin(p)*sin(y)-cos(y)*sin(r);
+    R[2][0] = -sin(p);
+    R[2][1] = cos(p)*sin(r);
+    R[2][2] = cos(p)*cos(r);
+
+	//Convert to inertial frame
+	static double x_inertial, y_inertial, z_inertial;
+	x_inertial = R[0][0]*x_pixel + R[0][1]*y_pixel + R[0][2]*z_pixel;
+	y_inertial = R[1][0]*x_pixel + R[1][1]*y_pixel + R[1][2]*z_pixel;
+	z_inertial = R[2][0]*x_pixel + R[2][1]*y_pixel + R[2][2]*z_pixel;
+
+	//std::cout << "roll : " << r << " pitch : " << p << " yaw : " << y << std::endl;
+	//std::cout << "x_body : (" << R[0][0] << ", " << R[1][0] << ", " << R[2][0] << std::endl; 
+	//std::cout << "y_body : (" << R[0][1] << ", " << R[1][1] << ", " << R[2][1] << std::endl; 
+	//std::cout << "x_p : " << x_pixel << " x_i : " << x_inertial << std::endl;
+	//std::cout << "y_p : " << y_pixel << " y_i : " << y_inertial << std::endl;
+	//Compute detected position
+	static double x_detect, y_detect;
+	static double z_now;
+	z_now = -odom_.pose.pose.position.z;
+
+	x_detect = (z_now/z_inertial)*x_inertial;
+	y_detect = (z_now/z_inertial)*y_inertial;
+
+	Q_EMIT emit_landing_state( -y_detect, x_detect );
 }
 
 void QNode::initialize_pos_setpoint()

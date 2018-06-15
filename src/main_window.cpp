@@ -36,6 +36,8 @@ ICSL_GCS::ICSL_GCS(int argc, char** argv, QWidget *parent)
 						  this, SLOT(set_thrust_setpoint(double, bool))); 
 	QObject::connect(&qnode, SIGNAL(emit_kill_switch_enabled(bool)), 
 						  this, SLOT(set_kill_switch_enabled(bool))); 
+	QObject::connect(&qnode, SIGNAL(emit_landing_state(double, double)), 
+						  this, SLOT(set_landing_state(double, double))); 
 
 	key_I = new QShortcut(Qt::Key_I, ui.centralwidget);
 	key_P = new QShortcut(Qt::Key_P, ui.centralwidget);
@@ -302,6 +304,13 @@ void ICSL_GCS::set_kill_switch_enabled(bool tf)
 	}
 }
 
+void ICSL_GCS::set_landing_state(double x, double y)
+{
+	ui.widget_landing->graph(0)->data()->clear();
+	ui.widget_landing->graph(0)->addData(x, y);
+	ui.widget_landing->replot();
+}
+
 /** etcs **/
 void ICSL_GCS::setupGraph()
 {
@@ -341,6 +350,17 @@ void ICSL_GCS::setupGraph()
 	graph[11] = new DrawingModule( ui.widget_r );
 	graph[11]->setYLims(-30.0, 30.0);
 
+	QCPScatterStyle brush;
+	brush.setShape(QCPScatterStyle::ssCircle);
+	brush.setPen(QPen(Qt::blue));
+	brush.setBrush(Qt::black);
+	brush.setSize(10);
+
+	ui.widget_landing->addGraph();
+	//ui.widget_landing->graph(0)->setPen(QPen(QColor(0,0,0)));
+	ui.widget_landing->graph(0)->setScatterStyle(brush);
+	ui.widget_landing->xAxis->setRange(-2,2);
+	ui.widget_landing->yAxis->setRange(-2,2);
 	//graph[12] = new DrawingModule( ui.widget_f_x );
 	//graph[12]->setYLims(-0.5, 0.5);
 	//

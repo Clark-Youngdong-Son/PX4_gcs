@@ -19,6 +19,7 @@
 #include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/Quaternion.h>
 #include <geometry_msgs/PointStamped.h>
+#include <geometry_msgs/Point.h>
 #include <sensor_msgs/NavSatFix.h>
 #include <nav_msgs/Odometry.h>
 #include <std_msgs/String.h>
@@ -87,6 +88,7 @@ Q_SIGNALS:
 	void emit_attitude_setpoint(double*, bool);
 	void emit_thrust_setpoint(double, bool);
 	void emit_kill_switch_enabled(bool);
+	void emit_landing_state(double, double);
 
 private:
 	int init_argc;
@@ -102,10 +104,13 @@ private:
 	void att_sp_cb(const mavros_msgs::AttitudeTarget::ConstPtr &);
 	void odom_cb(const nav_msgs::Odometry::ConstPtr &);
 	void imu_cb(const sensor_msgs::Imu::ConstPtr &);
+	void landing_cb(const geometry_msgs::Point::ConstPtr &);
 
 	/** current states **/
 	mavros_msgs::State px4_state_;
 	nav_msgs::Odometry odom_;
+	sensor_msgs::Imu imu_;	
+	double yaw_;
 	
 	/** publisher **/
 	ros::Publisher pub_[2];
