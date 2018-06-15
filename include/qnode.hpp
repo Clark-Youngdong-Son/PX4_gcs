@@ -72,6 +72,7 @@ public:
 	void start_control_service();
 	void stop_control_service();
 	void start_mpc_service(int);
+	void start_landing(int);
 
 Q_SIGNALS:
     // quit
@@ -111,6 +112,7 @@ private:
 	nav_msgs::Odometry odom_;
 	sensor_msgs::Imu imu_;	
 	double yaw_;
+	double x_detect_, y_detect_;
 	
 	/** publisher **/
 	ros::Publisher pub_[2];
@@ -131,6 +133,8 @@ private:
 	double px4_timer_ = 0.0;
 	bool emergency_stop_ = false;
 	bool control_flag_ = false;
+	bool align_flag_ = false;
+	bool landing_flag_ = false;
 
 	void override_kill_switch();
 };

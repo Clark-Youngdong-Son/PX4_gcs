@@ -136,6 +136,24 @@ void QNode::run()
 			if( init_pos_sp_ )
 			{	// publish setpoint
 				pos_sp_.header.stamp = ros::Time::now();
+				if(align_flag_)
+				{
+					//if(abs(x_detect_)>0.2) pos_sp_.position.x = pos_sp_.position.x + x_detect_;
+					//else pos_sp_.position.x = pos_sp_.position.x + 0.5*x_detect_;
+					//if(abs(y_detect_)>0.2) pos_sp_.position.y = pos_sp_.position.y + y_detect_;
+					//else pos_sp_.position.y = pos_sp_.position.y + 0.5*y_detect_;
+					if(fabs(x_detect_)>0.2) pos_sp_.position.x = odom_.pose.pose.position.x + x_detect_;
+					//else pos_sp_.position.x = odom_.pose.pose.position.x + 0.5*x_detect_;
+					if(fabs(y_detect_)>0.2) pos_sp_.position.y = odom_.pose.pose.position.y + y_detect_;
+					//else pos_sp_.position.y = odom_.pose.pose.position.y + 0.5*y_detect_;
+					pos_sp_.velocity.x = 0.0;
+					pos_sp_.velocity.y = 0.0;
+				}
+				if(landing_flag_)
+				{
+					pos_sp_.position.z = pos_sp_.position.z - 0.1/rate;
+					if(pos_sp_.position.z<-1.0) pos_sp_.position.z = -1.0;
+				}
 				pub_[0].publish( pos_sp_ );	
 				
 				double* buf = (double*)malloc(9*sizeof(double));	
@@ -354,6 +372,8 @@ void QNode::stop_control_service()
 void QNode::start_mpc_service(int command)
 {
 	static keyboard::Key keyCommand;
+	align_flag_ = false;
+	landing_flag_ = false;
 	if(command==0)
 	{
 		keyCommand.code = keyCommand.KEY_m;
@@ -376,6 +396,33 @@ void QNode::start_mpc_service(int command)
 		keyCommand.code = keyCommand.KEY_b;
 	}
 	mpc_command_pub_.publish(keyCommand);
+}
+
+void QNode::start_landing(int command)
+{
+	if(command==1)
+	{
+		align_flag_ = true;
+		landing_flag_ = false;
+		std::cout << "[LANDING] aligning..." << std::endl;
+	}
+	else if(command==2)
+	{
+		if(align_flag_)
+		{
+			landing_flag_ = true;
+			std::cout << "[LANDING] landing..." << std::endl;
+		}
+		else
+		{
+			std::cout << "[LANDING] align first..." << std::endl;
+		}
+	}
+	else
+	{
+		align_flag_ = false;
+		landing_flag_ = false;
+	}
 }
 
 /** subscription callbacks **/
@@ -559,14 +606,13 @@ void QNode::landing_cb(const geometry_msgs::Point::ConstPtr &msg)
 	//std::cout << "x_p : " << x_pixel << " x_i : " << x_inertial << std::endl;
 	//std::cout << "y_p : " << y_pixel << " y_i : " << y_inertial << std::endl;
 	//Compute detected position
-	static double x_detect, y_detect;
 	static double z_now;
 	z_now = -odom_.pose.pose.position.z;
 
-	x_detect = (z_now/z_inertial)*x_inertial;
-	y_detect = (z_now/z_inertial)*y_inertial;
+	x_detect_ = (z_now/z_inertial)*x_inertial;
+	y_detect_ = (z_now/z_inertial)*y_inertial;
 
-	Q_EMIT emit_landing_state( -y_detect, x_detect );
+	Q_EMIT emit_landing_state( -y_detect_, x_detect_ );
 }
 
 void QNode::initialize_pos_setpoint()
