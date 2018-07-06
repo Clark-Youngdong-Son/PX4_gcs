@@ -142,9 +142,9 @@ void QNode::run()
 					//else pos_sp_.position.x = pos_sp_.position.x + 0.5*x_detect_;
 					//if(abs(y_detect_)>0.2) pos_sp_.position.y = pos_sp_.position.y + y_detect_;
 					//else pos_sp_.position.y = pos_sp_.position.y + 0.5*y_detect_;
-					if(fabs(x_detect_)>0.2) pos_sp_.position.x = odom_.pose.pose.position.x + x_detect_;
+					if(fabs(x_detect_)>0.1) pos_sp_.position.x = odom_.pose.pose.position.x + x_detect_;
 					//else pos_sp_.position.x = odom_.pose.pose.position.x + 0.5*x_detect_;
-					if(fabs(y_detect_)>0.2) pos_sp_.position.y = odom_.pose.pose.position.y + y_detect_;
+					if(fabs(y_detect_)>0.1) pos_sp_.position.y = odom_.pose.pose.position.y + y_detect_;
 					//else pos_sp_.position.y = odom_.pose.pose.position.y + 0.5*y_detect_;
 					pos_sp_.velocity.x = 0.0;
 					pos_sp_.velocity.y = 0.0;
